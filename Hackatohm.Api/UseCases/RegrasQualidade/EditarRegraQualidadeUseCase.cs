@@ -9,7 +9,8 @@ namespace Hackatohm.Api.UseCases.RegrasQualidade;
 public sealed class EditarRegraQualidadeUseCase(
     IRegraQualidadeRepository regraQualidadeRepository,
     IUnitOfWork unitOfWork,
-    IValidator<EditarRegraQualidadeRequestDto> validator)
+    IValidator<EditarRegraQualidadeRequestDto> validator,
+    ILogger<EditarRegraQualidadeUseCase> logger)
 {
     public async Task<RegraQualidadeResponseDto?> ExecutarAsync(
         Guid id,
@@ -31,6 +32,10 @@ public sealed class EditarRegraQualidadeUseCase(
 
         regraQualidadeRepository.Atualizar(regra);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        logger.LogInformation(
+            "Regra de qualidade {RegraId} editada. Ativo: {Ativo}.",
+            regra.Id,
+            regra.Ativo);
         return RegraQualidadeResponseMapper.Mapear(regra);
     }
 }

@@ -5,7 +5,8 @@ namespace Hackatohm.Api.UseCases.RegrasQualidade;
 
 public sealed class AtualizarVinculoRegraQualidadeUseCase(
     IMotorRegraQualidadeRepository repository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ILogger<AtualizarVinculoRegraQualidadeUseCase> logger)
 {
     public async Task<VinculoRegraQualidadeResponseDto?> ExecutarAsync(
         int motorId,
@@ -19,6 +20,11 @@ public sealed class AtualizarVinculoRegraQualidadeUseCase(
 
         vinculo.Ativo = request.Ativo;
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        logger.LogInformation(
+            "Vínculo da regra {RegraId} no motor {MotorId} atualizado. Ativo: {Ativo}.",
+            regraId,
+            motorId,
+            vinculo.Ativo);
         return RegraQualidadeResponseMapper.Mapear(vinculo);
     }
 }

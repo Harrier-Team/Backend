@@ -11,7 +11,8 @@ namespace Hackatohm.Api.UseCases.RegrasQualidade;
 public sealed class CadastrarRegraQualidadeUseCase(
     IRegraQualidadeRepository regraQualidadeRepository,
     IUnitOfWork unitOfWork,
-    IValidator<CadastrarRegraQualidadeRequestDto> validator)
+    IValidator<CadastrarRegraQualidadeRequestDto> validator,
+    ILogger<CadastrarRegraQualidadeUseCase> logger)
 {
     public async Task<RegraQualidadeResponseDto> ExecutarAsync(
         CadastrarRegraQualidadeRequestDto request,
@@ -32,6 +33,11 @@ public sealed class CadastrarRegraQualidadeUseCase(
 
         await regraQualidadeRepository.AdicionarAsync(regra, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        logger.LogInformation(
+            "Regra de qualidade {RegraId} criada. Tipo: {TipoRegra}, Ativo: {Ativo}.",
+            regra.Id,
+            regra.TipoRegra,
+            regra.Ativo);
         return RegraQualidadeResponseMapper.Mapear(regra);
     }
 }

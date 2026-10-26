@@ -5,7 +5,8 @@ namespace Hackatohm.Api.UseCases.RegrasQualidade;
 
 public sealed class ExcluirRegraQualidadeUseCase(
     IRegraQualidadeRepository regraQualidadeRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ILogger<ExcluirRegraQualidadeUseCase> logger)
 {
     public async Task<bool> ExecutarAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -15,6 +16,9 @@ public sealed class ExcluirRegraQualidadeUseCase(
 
         regraQualidadeRepository.Excluir(regra);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        logger.LogInformation(
+            "Regra de qualidade {RegraId} excluída com seus vínculos.",
+            id);
         return true;
     }
 }

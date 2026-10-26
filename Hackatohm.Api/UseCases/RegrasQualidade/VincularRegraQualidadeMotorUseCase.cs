@@ -1,6 +1,9 @@
 using Hackatohm.Api.Data.Interfaces;
 using Hackatohm.Api.DTOs;
 using Hackatohm.Api.Entities;
+using Hackatohm.Api.Errors;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Hackatohm.Api.UseCases.RegrasQualidade;
 
@@ -20,7 +23,8 @@ public sealed class VincularRegraQualidadeMotorUseCase(
     IMotorRepository motorRepository,
     IRegraQualidadeRepository regraRepository,
     IMotorRegraQualidadeRepository vinculoRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ILogger<VincularRegraQualidadeMotorUseCase> logger)
 {
     public async Task<VincularRegraQualidadeResultado> ExecutarAsync(
         int motorId,
@@ -48,9 +52,35 @@ public sealed class VincularRegraQualidadeMotorUseCase(
         };
 
         await vinculoRepository.AdicionarAsync(vinculo, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception) when (IsDuplicateLink(exception))
+        {
+            logger.LogWarning(
+                "Conflito ao associar regra {RegraId} ao motor {MotorId}; a associação já existe.",
+                regraId,
+                motorId);
+            throw new ApiConflictException(
+                ApiErrorCatalog.QualityRuleAlreadyLinked,
+                exception);
+        }
+
+        logger.LogInformation(
+            "Regra {RegraId} associada ao motor {MotorId}. Ativo: {Ativo}.",
+            regraId,
+            motorId,
+            vinculo.Ativo);
         return new(
             StatusVinculoRegraQualidade.Criado,
             RegraQualidadeResponseMapper.Mapear(vinculo));
     }
+
+    private static bool IsDuplicateLink(DbUpdateException exception) =>
+        exception.InnerException is PostgresException postgresException &&
+        postgresException.SqlState == PostgresErrorCodes.UniqueViolation &&
+        postgresException.ConstraintName?.Contains(
+            "motores_regras_qualidade",
+            StringComparison.OrdinalIgnoreCase) == true;
 }

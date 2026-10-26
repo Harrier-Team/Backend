@@ -42,6 +42,23 @@ public sealed class ApiExceptionHandler(
             return true;
         }
 
+        if (exception is ApiConflictException conflictException)
+        {
+            logger.LogWarning(
+                conflictException,
+                "Conflito de negócio. TraceId: {TraceId}, Path: {Path}, Code: {Code}.",
+                httpContext.TraceIdentifier,
+                httpContext.Request.Path,
+                conflictException.Error.Code);
+
+            await EscreverErroAsync(
+                httpContext,
+                conflictException.Error,
+                null,
+                cancellationToken);
+            return true;
+        }
+
         logger.LogError(
             exception,
             "Falha inesperada ao processar a requisição. TraceId: {TraceId}, Path: {Path}, Method: {Method}.",

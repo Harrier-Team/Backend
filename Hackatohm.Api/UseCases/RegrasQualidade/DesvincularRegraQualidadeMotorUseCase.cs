@@ -4,7 +4,8 @@ namespace Hackatohm.Api.UseCases.RegrasQualidade;
 
 public sealed class DesvincularRegraQualidadeMotorUseCase(
     IMotorRegraQualidadeRepository repository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ILogger<DesvincularRegraQualidadeMotorUseCase> logger)
 {
     public async Task<bool> ExecutarAsync(
         int motorId,
@@ -17,6 +18,10 @@ public sealed class DesvincularRegraQualidadeMotorUseCase(
 
         repository.Remover(vinculo);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        logger.LogInformation(
+            "Regra {RegraId} desvinculada do motor {MotorId}.",
+            regraId,
+            motorId);
         return true;
     }
 }
