@@ -91,7 +91,7 @@ public sealed class QualityGateContractTests
             null,
             []);
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
-        options.Converters.Add(new JsonStringEnumConverter());
+        options.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
 
         var json = JsonSerializer.Serialize(dto, options);
 
@@ -105,13 +105,23 @@ public sealed class QualityGateContractTests
     public void NivelSeveridade_SerializaTodosOsValoresComoString()
     {
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
-        options.Converters.Add(new JsonStringEnumConverter());
+        options.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
 
         var json = JsonSerializer.Serialize(
             Enum.GetValues<NivelSeveridade>(),
             options);
 
         Assert.Equal("""["Normal","Atencao","AlertaPreditivo","Critico"]""", json);
+    }
+
+    [Fact]
+    public void NivelSeveridade_NaoAceitaRepresentacaoNumerica()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        options.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
+
+        Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<NivelSeveridade>("0", options));
     }
 
     [Fact]
@@ -129,7 +139,7 @@ public sealed class QualityGateContractTests
             null,
             null);
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
-        options.Converters.Add(new JsonStringEnumConverter());
+        options.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
 
         var json = JsonSerializer.Serialize(dto, options);
 

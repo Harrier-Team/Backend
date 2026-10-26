@@ -46,6 +46,16 @@ Os valores públicos de `severidade` são:
 As avaliações são eventos transitórios. O backend não persiste histórico de
 resultados nesta versão.
 
+## Distribuição dos eventos
+
+Nesta versão, a telemetria é publicada em broadcast global. Todos os clientes
+conectados recebem os eventos e o frontend é responsável por filtrar os itens
+do motor atualmente exibido usando `motorId`.
+
+O hub mantém `AssinarMotor` e `DesassinarMotor` para uma evolução futura, mas
+esses grupos não restringem a publicação enquanto a estratégia global estiver
+em vigor.
+
 ## Compatibilidade
 
 Clientes antigos que ignoram `resultadosQualityGates` continuam compatíveis.
