@@ -16,6 +16,7 @@ public sealed class QualityGateContractTests
     [Theory]
     [InlineData(80, 95)]
     [InlineData(-55, 125)]
+    [InlineData(80, 200)]
     public void RegraValidador_AceitaLimitesFinitos(double aviso, double critico)
     {
         var validator = new CadastrarRegraQualidadeRequestDtoValidator();
@@ -35,7 +36,7 @@ public sealed class QualityGateContractTests
     [InlineData(double.PositiveInfinity, 95)]
     [InlineData(95, 80)]
     [InlineData(-56, 95)]
-    [InlineData(80, 126)]
+    [InlineData(80, 401)]
     public void RegraValidador_RejeitaLimitesInvalidos(double aviso, double critico)
     {
         var validator = new CadastrarRegraQualidadeRequestDtoValidator();
