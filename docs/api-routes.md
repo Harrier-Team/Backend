@@ -12,6 +12,7 @@ durante a execução da API em desenvolvimento:
 | `POST` | `/api/motores` | `201` | Cadastra um motor e seus sensores iniciais. |
 | `GET` | `/api/motores` | `200` | Lista os motores cadastrados. |
 | `GET` | `/api/motores/{id}` | `200` | Obtém um motor pelo identificador inteiro. |
+| `GET` | `/api/motores/{id}/status` | `200` | Obtém o status agregado das escovas e Quality Gates do motor. |
 | `DELETE` | `/api/motores/{id}` | `204` | Exclui um motor pelo identificador inteiro. |
 
 Os endpoints de consulta e exclusão retornam `404` quando o motor não existe.
@@ -81,7 +82,8 @@ Uma associação duplicada retorna `409 Conflict` com o código
 | SignalR | `/api/telemetriaHub` | Endpoint de conexão do hub SignalR. |
 
 O hub publica `ReceberLoteTelemetria` e `ReceberTelemetria`. O contrato desses
-eventos está em [signalr-contract.md](signalr-contract.md).
+eventos, além de `ReceberStatusMotor`, está em
+[signalr-contract.md](signalr-contract.md).
 
 ## Erros
 

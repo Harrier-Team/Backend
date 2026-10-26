@@ -36,13 +36,16 @@ builder.Services.AddSignalR(options =>
     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
     options.KeepAliveInterval = TimeSpan.FromSeconds(15);
     options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
-});
+}).AddJsonProtocol(options =>
+    options.PayloadSerializerOptions.Converters.Add(
+        new JsonStringEnumConverter(allowIntegerValues: false)));
 
 builder.Services
     .AddOptions<TelemetriaOptions>()
     .Bind(builder.Configuration.GetSection(TelemetriaOptions.SectionName))
     .Validate(settings => settings.QueueCapacity > 0, "A capacidade da fila deve ser positiva.")
     .Validate(settings => settings.MaxBatchSize > 0, "O tamanho máximo do lote deve ser positivo.")
+    .Validate(settings => settings.OfflineAfterSeconds > 0, "O tempo para considerar o motor offline deve ser positivo.")
     .ValidateOnStart();
 
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();

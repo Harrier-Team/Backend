@@ -5,6 +5,9 @@ using Hackatohm.Api.Hubs;
 using Hackatohm.Domain.QualityGates;
 using Microsoft.AspNetCore.SignalR;
 using Hackatohm.Api.Queues;
+using Hackatohm.Application.MotorStatus;
+using Microsoft.Extensions.Options;
+using Hackatohm.Api.UseCases.Motores;
 
 namespace Hackatohm.Api.UseCases.Leituras;
 
@@ -37,6 +40,8 @@ public class ProcessarLeiturasLoteUseCase(
     IUnitOfWork unitOfWork,
     IHubContext<TelemetriaHub, ITelemetriaClient> hubContext,
     IQualityGateEvaluator qualityGateEvaluator,
+    IMotorStatusService motorStatusService,
+    IOptions<TelemetriaOptions> telemetriaOptions,
     ILogger<ProcessarLeiturasLoteUseCase> logger)
 {
     public async Task<ProcessarLeiturasLoteResult> ProcessarAsync(
@@ -136,6 +141,29 @@ public class ProcessarLeiturasLoteUseCase(
         try
         {
             await hubContext.Clients.All.ReceberLoteTelemetria(dtosRealtime);
+
+            foreach (var motorId in sensoresPorId.Values
+                         .Select(sensor => sensor.MotorId)
+                         .Distinct())
+            {
+                var leiturasDoMotor = leiturasParaSalvar
+                    .Where(leitura => sensoresPorId[leitura.SensorId].MotorId == motorId)
+                    .Select(leitura => new MotorStatusReading(
+                        leitura.SensorId,
+                        sensoresPorId[leitura.SensorId].NumeroEscova,
+                        leitura.ValorCelsius,
+                        leitura.DataHora,
+                        leitura.AlertaDesgaste,
+                        resultadosPorSensor[leitura.SensorId]))
+                    .ToArray();
+                var status = motorStatusService.Agregar(
+                    motorId,
+                    leiturasDoMotor,
+                    TimeSpan.FromSeconds(telemetriaOptions.Value.OfflineAfterSeconds),
+                    dataRecebimento);
+                await hubContext.Clients.All
+                    .ReceberStatusMotor(MotorStatusResponseMapper.Mapear(status));
+            }
         }
         catch (Exception exception)
         {

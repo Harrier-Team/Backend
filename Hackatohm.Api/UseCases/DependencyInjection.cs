@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddScoped<ObterUltimaLeituraUseCase>();
         services.AddScoped<CadastrarMotorUseCase>();
         services.AddScoped<ObterMotorUseCase>();
+        services.AddScoped<ObterStatusMotorUseCase>();
         services.AddScoped<ListarMotoresUseCase>();
         services.AddScoped<DeletarMotorUseCase>();
         services.AddScoped<CadastrarSensorUseCase>();

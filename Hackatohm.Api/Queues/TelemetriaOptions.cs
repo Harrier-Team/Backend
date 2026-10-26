@@ -6,6 +6,7 @@ public sealed class TelemetriaOptions
 
     public int QueueCapacity { get; set; } = 5_000;
     public int MaxBatchSize { get; set; } = 100;
+    public int OfflineAfterSeconds { get; set; } = 120;
 }
 
 public sealed record TelemetriaQueueSnapshot(
