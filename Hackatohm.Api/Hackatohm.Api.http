@@ -1,0 +1,72 @@
+@Hackatohm.Api_HostAddress = http://localhost:5281
+
+GET {{Hackatohm.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+### Criar regra de limiar térmico
+POST {{Hackatohm.Api_HostAddress}}/api/regras-qualidade
+Content-Type: application/json
+
+{
+  "nome": "Limiar térmico padrão",
+  "descricao": "Detecta temperaturas elevadas nas escovas",
+  "parametros": {
+    "aviso": 80,
+    "critico": 95
+  },
+  "ativo": true
+}
+
+### Listar regras de qualidade
+GET {{Hackatohm.Api_HostAddress}}/api/regras-qualidade
+Accept: application/json
+
+### Obter regra de qualidade (substituir pelo Guid criado)
+GET {{Hackatohm.Api_HostAddress}}/api/regras-qualidade/00000000-0000-0000-0000-000000000001
+Accept: application/json
+
+### Editar regra de qualidade
+PUT {{Hackatohm.Api_HostAddress}}/api/regras-qualidade/00000000-0000-0000-0000-000000000001
+Content-Type: application/json
+
+{
+  "nome": "Limiar térmico revisado",
+  "descricao": "Parâmetros atualizados para o equipamento",
+  "parametros": {
+    "aviso": 82,
+    "critico": 98
+  },
+  "ativo": true
+}
+
+### Associar regra ao motor
+POST {{Hackatohm.Api_HostAddress}}/api/motores/1/regras-qualidade/00000000-0000-0000-0000-000000000001
+Content-Type: application/json
+
+{
+  "ativo": true
+}
+
+### Listar regras associadas ao motor
+GET {{Hackatohm.Api_HostAddress}}/api/motores/1/regras-qualidade
+Accept: application/json
+
+### Obter vínculo de regra e motor
+GET {{Hackatohm.Api_HostAddress}}/api/motores/1/regras-qualidade/00000000-0000-0000-0000-000000000001
+Accept: application/json
+
+### Ativar ou desativar vínculo
+PUT {{Hackatohm.Api_HostAddress}}/api/motores/1/regras-qualidade/00000000-0000-0000-0000-000000000001
+Content-Type: application/json
+
+{
+  "ativo": false
+}
+
+### Remover vínculo sem excluir a regra do catálogo
+DELETE {{Hackatohm.Api_HostAddress}}/api/motores/1/regras-qualidade/00000000-0000-0000-0000-000000000001
+
+### Excluir regra e todos os seus vínculos
+DELETE {{Hackatohm.Api_HostAddress}}/api/regras-qualidade/00000000-0000-0000-0000-000000000001

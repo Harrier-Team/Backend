@@ -1,0 +1,27 @@
+# Build output
+**/bin/
+**/obj/
+
+# IDE and user-specific files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+**/appsettings.*.json
+!**/appsettings.*.example.json
+**/secrets*.json
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini

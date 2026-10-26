@@ -1,0 +1,172 @@
+using Hackatohm.Api.Data.Interfaces;
+using Hackatohm.Api.DTOs;
+using Hackatohm.Api.DTOs.Hubs;
+using Hackatohm.Api.Entities;
+using Hackatohm.Api.Hubs;
+using Hackatohm.Api.QualityGates;
+using Hackatohm.Api.QualityGates.Models;
+using Microsoft.AspNetCore.SignalR;
+using Hackatohm.Api.Queues;
+
+namespace Hackatohm.Api.UseCases.Leituras;
+
+public enum StatusProcessamentoLote
+{
+    Sucesso,
+    SensoresNaoCadastrados
+}
+
+public record ProcessarLeiturasLoteResult(
+    StatusProcessamentoLote Status,
+    string? MensagemErro = null,
+    IReadOnlyList<string>? SensoresAusentes = null,
+    int SensoresProcessados = 0,
+    bool AlertaDetectado = false
+)
+{
+    public static ProcessarLeiturasLoteResult CriarSucesso(int sensoresProcessados, bool alertaDetectado) =>
+        new(StatusProcessamentoLote.Sucesso, null, null, sensoresProcessados, alertaDetectado);
+
+    public static ProcessarLeiturasLoteResult CriarSensoresNaoCadastrados(IReadOnlyList<string> sensoresAusentes) =>
+        new(StatusProcessamentoLote.SensoresNaoCadastrados,
+            "Sensores não cadastrados.",
+            sensoresAusentes);
+}
+
+public class ProcessarLeiturasLoteUseCase(
+    ISensorRepository sensorRepository,
+    ILeituraTemperaturaRepository leituraTemperaturaRepository,
+    IUnitOfWork unitOfWork,
+    IHubContext<TelemetriaHub, ITelemetriaClient> hubContext,
+    IQualityGateEvaluator qualityGateEvaluator,
+    ILogger<ProcessarLeiturasLoteUseCase> logger)
+{
+    public async Task<ProcessarLeiturasLoteResult> ProcessarAsync(
+        TelemetriaRecebida telemetria,
+        CancellationToken cancellationToken = default)
+    {
+        var payload = telemetria.Payload;
+        var ipAtual = telemetria.IpAtual;
+        var dataRecebimento = telemetria.DataRecebimento;
+
+        var idsSensores = payload.Sensores
+            .Select(leitura => Sensor.CriarId(payload.EspMacAddress, leitura.NumeroEscova))
+            .ToArray();
+
+        var sensoresPorId = await sensorRepository.ObterPorIdsComoDicionarioAsync(
+            idsSensores,
+            cancellationToken);
+
+        var sensoresAusentes = idsSensores
+            .Where(id => !sensoresPorId.ContainsKey(id))
+            .ToArray();
+
+        if (sensoresAusentes.Length > 0)
+        {
+            logger.LogWarning(
+                "Telemetria {RequestId} rejeitada para ESP {MacAddress}: sensores não cadastrados: {SensorIds}.",
+                telemetria.RequestId,
+                payload.EspMacAddress,
+                string.Join(", ", sensoresAusentes));
+            return ProcessarLeiturasLoteResult.CriarSensoresNaoCadastrados(sensoresAusentes);
+        }
+
+        var ultimasLeituras = await leituraTemperaturaRepository.ObterMaisRecentesPorSensoresAsync(
+            idsSensores,
+            cancellationToken);
+
+        var leiturasParaSalvar = new List<LeituraTemperatura>(payload.Sensores.Count);
+        var contextosAvaliacao = new List<ContextoAvaliacao>(payload.Sensores.Count);
+        foreach (var leitura in payload.Sensores)
+        {
+            var sensor = sensoresPorId[Sensor.CriarId(payload.EspMacAddress, leitura.NumeroEscova)];
+            sensor.UltimaConexao = dataRecebimento;
+            if (ipAtual is not null)
+                sensor.IpAtual = ipAtual;
+
+            ultimasLeituras.TryGetValue(sensor.Id, out var leituraAnterior);
+
+            contextosAvaliacao.Add(new ContextoAvaliacao(
+                sensor,
+                leitura,
+                dataRecebimento,
+                payload.Sensores,
+                leituraAnterior?.ValorCelsius,
+                leituraAnterior is null
+                    ? null
+                    : dataRecebimento - leituraAnterior.DataHora));
+        }
+
+        var resultadosPorSensor = await qualityGateEvaluator.AvaliarLoteAsync(
+            contextosAvaliacao,
+            cancellationToken);
+
+        foreach (var contextoAvaliacao in contextosAvaliacao)
+        {
+            var sensor = contextoAvaliacao.Sensor;
+            var leitura = contextoAvaliacao.LeituraAtual;
+            var resultadosAvaliacao = resultadosPorSensor[sensor.Id];
+            leiturasParaSalvar.Add(new LeituraTemperatura
+            {
+                SensorId = sensor.Id,
+                ValorCelsius = leitura.Temperatura,
+                DataHora = dataRecebimento,
+                AlertaDesgaste = resultadosAvaliacao.Any(resultado => resultado.DisparouAlerta)
+            });
+        }
+
+        await leituraTemperaturaRepository.AdicionarRangeAsync(
+            leiturasParaSalvar,
+            cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Telemetria {RequestId} processada e salva para ESP {MacAddress}: {SensorCount} leituras de {ClientIp}.",
+            telemetria.RequestId,
+            payload.EspMacAddress,
+            leiturasParaSalvar.Count,
+            ipAtual ?? "IP indisponível");
+
+        var dtosRealtime = leiturasParaSalvar.Select(leitura => new TelemetriaRealtimeDto(
+            leitura.SensorId,
+            payload.EspMacAddress,
+            sensoresPorId[leitura.SensorId].NumeroEscova,
+            leitura.ValorCelsius,
+            leitura.DataHora,
+            leitura.AlertaDesgaste,
+            sensoresPorId[leitura.SensorId].MotorId,
+            resultadosPorSensor[leitura.SensorId]
+                .Select(resultado => new ResultadoGateRealtimeDto(
+                    resultado.RegraQualidadeId!.Value,
+                    resultado.NomeRegra!,
+                    resultado.DisparouAlerta,
+                    resultado.Severidade,
+                    resultado.TipoRegra,
+                    resultado.CodigoRegra,
+                    resultado.MensagemDiagnostico,
+                    resultado.ValorObservado,
+                    resultado.ValorLimite,
+                    resultado.Metadados))
+                .ToArray()
+        )).ToList();
+
+        try
+        {
+            await hubContext.Clients.All.ReceberLoteTelemetria(dtosRealtime);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(
+                exception,
+                "Telemetria persistida, mas não foi possível notificar os clientes SignalR. " +
+                "ESP {MacAddress}, quantidade de leituras {SensorCount}.",
+                payload.EspMacAddress,
+                leiturasParaSalvar.Count);
+        }
+
+        return ProcessarLeiturasLoteResult.CriarSucesso(
+            sensoresProcessados: leiturasParaSalvar.Count,
+            alertaDetectado: leiturasParaSalvar.Any(leitura => leitura.AlertaDesgaste)
+        );
+    }
+}
