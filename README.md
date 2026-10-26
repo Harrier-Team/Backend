@@ -49,7 +49,9 @@ dotnet tool update --global dotnet-ef --version 10.0.14
 Crie ou atualize o schema do banco:
 
 ```powershell
-dotnet ef database update --project Hackatohm.Api/Hackatohm.Api.csproj
+dotnet ef database update `
+  --project Hackatohm.Infrastructure/Hackatohm.Infrastructure.csproj `
+  --startup-project Hackatohm.Api/Hackatohm.Api.csproj
 ```
 
 Execute a API:
@@ -65,19 +67,29 @@ O perfil HTTP de desenvolvimento disponibiliza a API em
 ## Estrutura
 
 ```text
+Hackatohm.Domain/
+├── Entities/          Entidades e regras centrais
+└── QualityGates/      Contratos, contexto e estratégias puras
+Hackatohm.Application/
+├── Abstractions/      Interfaces de persistência
+└── QualityGates/      Avaliação e composição dos Quality Gates
+Hackatohm.Infrastructure/
+└── Persistence/       EF Core, repositórios e migrations
 Hackatohm.Api/
 ├── Controllers/       Endpoints HTTP
-├── Data/              AppDbContext, repositórios e unidade de trabalho
 ├── DTOs/              Contratos HTTP e SignalR
-├── Entities/          Entidades persistidas
 ├── Errors/            Catálogo de erros e tratamento de exceções
-├── Hubs/              Hub e contratos de telemetria em tempo real
-├── Migrations/        Histórico do schema do PostgreSQL
-├── QualityGates/      Avaliador e estratégias de regras
-├── Queues/            Fila em memória para telemetria recebida
-├── UseCases/          Casos de uso da aplicação
+├── Hubs/              Hub e contratos de tempo real
+├── Queues/            Fila em memória de telemetria
+├── UseCases/          Orquestração dos fluxos HTTP e ingestão
 └── Workers/           Processamento em background
 ```
+
+A composição segue o sentido `Api -> Application -> Domain` e
+`Api -> Infrastructure -> Application/Domain`. O domínio não conhece ASP.NET
+Core, EF Core, SignalR ou PostgreSQL. A API ainda concentra os adaptadores HTTP,
+SignalR e o processamento assíncrono; eles serão extraídos gradualmente para
+Application/Infrastructure sem alterar as rotas ou os contratos públicos.
 
 ## Endpoints principais
 
@@ -134,13 +146,17 @@ leituras e os resultados das regras avaliadas.
 Para criar uma migration:
 
 ```powershell
-dotnet ef migrations add NomeDaMigration --project Hackatohm.Api/Hackatohm.Api.csproj
+dotnet ef migrations add NomeDaMigration `
+  --project Hackatohm.Infrastructure/Hackatohm.Infrastructure.csproj `
+  --startup-project Hackatohm.Api/Hackatohm.Api.csproj
 ```
 
 Para aplicar migrations ao banco configurado:
 
 ```powershell
-dotnet ef database update --project Hackatohm.Api/Hackatohm.Api.csproj
+dotnet ef database update `
+  --project Hackatohm.Infrastructure/Hackatohm.Infrastructure.csproj `
+  --startup-project Hackatohm.Api/Hackatohm.Api.csproj
 ```
 
 Revise o código da migration antes de aplicá-la a ambientes compartilhados ou
@@ -149,12 +165,6 @@ de produção.
 ## Build
 
 Na raiz do repositório:
-
-```powershell
-dotnet build Hackatohm.Api/Hackatohm.Api.csproj
-```
-
-Para compilar a solução completa e executar os projetos de teste:
 
 ```powershell
 dotnet build Hackatohm.slnx
