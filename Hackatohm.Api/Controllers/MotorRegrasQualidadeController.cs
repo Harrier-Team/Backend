@@ -16,7 +16,7 @@ public sealed class MotorRegrasQualidadeController(
 {
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<VinculoRegraQualidadeResponseDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<VinculoRegraQualidadeResponseDto>>> Listar(
         int motorId,
         CancellationToken cancellationToken)
@@ -29,7 +29,7 @@ public sealed class MotorRegrasQualidadeController(
 
     [HttpGet("{regraId:guid}")]
     [ProducesResponseType(typeof(VinculoRegraQualidadeResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<VinculoRegraQualidadeResponseDto>> Obter(
         int motorId,
         Guid regraId,
@@ -43,8 +43,8 @@ public sealed class MotorRegrasQualidadeController(
 
     [HttpPost("{regraId:guid}")]
     [ProducesResponseType(typeof(VinculoRegraQualidadeResponseDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<VinculoRegraQualidadeResponseDto>> Vincular(
         int motorId,
         Guid regraId,
@@ -73,7 +73,7 @@ public sealed class MotorRegrasQualidadeController(
 
     [HttpPut("{regraId:guid}")]
     [ProducesResponseType(typeof(VinculoRegraQualidadeResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<VinculoRegraQualidadeResponseDto>> Atualizar(
         int motorId,
         Guid regraId,
@@ -92,7 +92,7 @@ public sealed class MotorRegrasQualidadeController(
 
     [HttpDelete("{regraId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Desvincular(
         int motorId,
         Guid regraId,

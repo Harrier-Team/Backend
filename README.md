@@ -169,6 +169,13 @@ Os projetos de teste são organizados em:
 O pipeline de CI executa restore, build e testes para cada push nas branches
 principais e para cada pull request.
 
+## Contratos versionados
+
+O contrato dos eventos SignalR está documentado em
+[docs/signalr-contract.md](docs/signalr-contract.md). Regras de compatibilidade
+HTTP e códigos de erro estão em
+[docs/api-compatibility.md](docs/api-compatibility.md).
+
 ## Observações operacionais
 
 - A fila de telemetria é mantida em memória. Uma reinicialização do processo

@@ -2,6 +2,7 @@ using Hackatohm.Api.QualityGates.Enums;
 
 namespace Hackatohm.Api.DTOs.Hubs;
 
+/// <summary>Representa o resultado transitório de uma regra publicado via SignalR.</summary>
 public sealed record ResultadoGateRealtimeDto(
     Guid RegraQualidadeId,
     string NomeRegra,

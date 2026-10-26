@@ -14,8 +14,8 @@ public class LeiturasController(
     [HttpPost]
     [ApiErrorAudience(ApiClientAudience.Device)]
     [ProducesResponseType(typeof(DispositivoSucessoResponseDto), StatusCodes.Status202Accepted)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    [ProducesResponseType(typeof(DispositivoErroResponseDto), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(DispositivoErroResponseDto), StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> ReceberLeituraEmLote(
         [FromBody] ReceberTelemetriaRequestDto? payload,
         CancellationToken cancellationToken)
@@ -48,6 +48,8 @@ public class LeiturasController(
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(UltimaLeituraResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ObterLeituraMaisRecente(
         [FromQuery] ObterUltimaLeituraRequestDto request,
         CancellationToken cancellationToken)

@@ -16,7 +16,7 @@ public sealed class RegrasQualidadeController(
 {
     [HttpPost]
     [ProducesResponseType(typeof(RegraQualidadeResponseDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<RegraQualidadeResponseDto>> Cadastrar(
         [FromBody] CadastrarRegraQualidadeRequestDto request,
         CancellationToken cancellationToken)
@@ -36,7 +36,7 @@ public sealed class RegrasQualidadeController(
 
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(RegraQualidadeResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RegraQualidadeResponseDto>> Obter(
         Guid id,
         CancellationToken cancellationToken)
@@ -49,8 +49,8 @@ public sealed class RegrasQualidadeController(
 
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(RegraQualidadeResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RegraQualidadeResponseDto>> Editar(
         Guid id,
         [FromBody] EditarRegraQualidadeRequestDto request,
@@ -64,7 +64,7 @@ public sealed class RegrasQualidadeController(
 
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Excluir(Guid id, CancellationToken cancellationToken)
     {
         var excluida = await excluirUseCase.ExecutarAsync(id, cancellationToken);
