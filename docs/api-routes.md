@@ -1,0 +1,81 @@
+# Rotas da API
+
+Este catálogo reflete as rotas expostas pelos controllers do backend. Os
+contratos dos corpos e das respostas podem ser consultados no documento OpenAPI
+durante a execução da API em desenvolvimento:
+`http://localhost:5281/openapi/v1.json`.
+
+## Motores
+
+| Método | Rota | Sucesso | Descrição |
+|---|---|---:|---|
+| `POST` | `/api/motores` | `201` | Cadastra um motor e seus sensores iniciais. |
+| `GET` | `/api/motores` | `200` | Lista os motores cadastrados. |
+| `GET` | `/api/motores/{id}` | `200` | Obtém um motor pelo identificador inteiro. |
+| `DELETE` | `/api/motores/{id}` | `204` | Exclui um motor pelo identificador inteiro. |
+
+Os endpoints de consulta e exclusão retornam `404` quando o motor não existe.
+
+## Sensores
+
+| Método | Rota | Sucesso | Descrição |
+|---|---|---:|---|
+| `POST` | `/api/sensores` | `201` | Cadastra um sensor associado a um motor. |
+| `GET` | `/api/sensores/{sensorId}` | `200` | Obtém um sensor pelo identificador textual. |
+| `POST` | `/api/motores/sensores/{sensorId}/ping` | `200` | Atualiza a última conexão e o endereço IP observado. |
+
+As rotas retornam `404` quando o sensor ou o motor referenciado não existe.
+
+## Telemetria e leituras
+
+| Método | Rota | Sucesso | Descrição |
+|---|---|---:|---|
+| `POST` | `/api/leituras` | `202` | Valida e enfileira um lote enviado pelo dispositivo. |
+| `GET` | `/api/leituras` | `200` | Consulta a leitura mais recente por sensor. |
+
+O POST retorna `400` para payload inválido e `503` quando a fila está cheia.
+Nesse último caso, a resposta inclui `Retry-After: 5`. A avaliação dos gates, a
+persistência e a publicação SignalR acontecem de forma assíncrona.
+
+## Catálogo de Quality Gates
+
+| Método | Rota | Sucesso | Descrição |
+|---|---|---:|---|
+| `POST` | `/api/regras-qualidade` | `201` | Cria uma regra de qualidade. |
+| `GET` | `/api/regras-qualidade` | `200` | Lista o catálogo de regras. |
+| `GET` | `/api/regras-qualidade/{id}` | `200` | Obtém uma regra pelo UUID. |
+| `PUT` | `/api/regras-qualidade/{id}` | `200` | Edita uma regra pelo UUID. |
+| `DELETE` | `/api/regras-qualidade/{id}` | `204` | Exclui uma regra e seus vínculos. |
+
+Nesta versão, o catálogo aceita `temperatura.limiar_estatico`. Os limites
+`aviso` e `critico` devem ser números finitos entre `-55` e `125`, com `aviso`
+menor que `critico`.
+
+## Vínculos entre motores e regras
+
+| Método | Rota | Sucesso | Descrição |
+|---|---|---:|---|
+| `GET` | `/api/motores/{motorId}/regras-qualidade` | `200` | Lista as regras vinculadas ao motor. |
+| `GET` | `/api/motores/{motorId}/regras-qualidade/{regraId}` | `200` | Obtém um vínculo pelo motor e regra. |
+| `POST` | `/api/motores/{motorId}/regras-qualidade/{regraId}` | `201` | Cria um vínculo. |
+| `PUT` | `/api/motores/{motorId}/regras-qualidade/{regraId}` | `200` | Atualiza o estado ativo do vínculo. |
+| `DELETE` | `/api/motores/{motorId}/regras-qualidade/{regraId}` | `204` | Remove somente o vínculo. |
+
+Uma associação duplicada retorna `409 Conflict` com o código
+`quality_rule_already_linked`.
+
+## Infraestrutura
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET` | `/health/live` | Verifica se a aplicação e a fila estão disponíveis. |
+| `GET` | `/health/ready` | Verifica PostgreSQL e fila para aceitar tráfego. |
+| SignalR | `/api/telemetriaHub` | Endpoint de conexão do hub SignalR. |
+
+O hub publica `ReceberLoteTelemetria` e `ReceberTelemetria`. O contrato desses
+eventos está em [signalr-contract.md](signalr-contract.md).
+
+## Erros
+
+As rotas HTTP usam Problem Details, enquanto a ingestão de dispositivos usa o
+formato compacto documentado em [api-compatibility.md](api-compatibility.md).

@@ -1,7 +1,11 @@
 # Hackatohm Backend
 
-API responsável pelo cadastro de motores e sensores, ingestão de telemetria,
-avaliação de regras de qualidade e atualização do painel em tempo real.
+Backend da Hackatohm para monitoramento térmico de motores elétricos,
+especialmente das escovas. O serviço recebe lotes de telemetria, avalia
+Quality Gates, persiste as leituras e publica atualizações para o painel em
+tempo real. Nesta etapa, o foco é entregar uma base funcional para manutenção
+preditiva; modelos de machine learning e histórico persistido dos resultados
+dos gates ainda não fazem parte do escopo implementado.
 
 ## Tecnologias
 
@@ -64,7 +68,22 @@ O perfil HTTP de desenvolvimento disponibiliza a API em
 `http://localhost:5281`. O documento OpenAPI está disponível em
 `http://localhost:5281/openapi/v1.json` durante o desenvolvimento.
 
-## Estrutura
+## Escopo atual
+
+- Cadastro de motores e sensores.
+- Ingestão assíncrona de lotes enviados pelos dispositivos.
+- Persistência das leituras no PostgreSQL.
+- Avaliação de regras de qualidade térmica configuráveis por motor.
+- Consulta da leitura mais recente de um sensor.
+- Publicação de telemetria e resultados dos gates via SignalR.
+- Health checks, métricas básicas e documentação OpenAPI em desenvolvimento.
+
+O envio SignalR permanece em broadcast global por simplicidade e prazo da
+Hackatohm. O frontend deve filtrar os eventos recebidos pelo identificador do
+motor. Assinatura de grupos existe no hub, mas não restringe o processamento
+atual.
+
+## Arquitetura e estrutura
 
 ```text
 Hackatohm.Domain/
@@ -87,59 +106,52 @@ Hackatohm.Api/
 
 A composição segue o sentido `Api -> Application -> Domain` e
 `Api -> Infrastructure -> Application/Domain`. O domínio não conhece ASP.NET
-Core, EF Core, SignalR ou PostgreSQL. A API ainda concentra os adaptadores HTTP,
-SignalR e o processamento assíncrono; eles serão extraídos gradualmente para
-Application/Infrastructure sem alterar as rotas ou os contratos públicos.
+Core, EF Core, SignalR ou PostgreSQL. Como o projeto ainda prioriza a entrega
+da Hackatohm, os adaptadores HTTP, SignalR e o processamento assíncrono
+continuam concentrados na API.
 
-## Endpoints principais
+## Rotas da API
 
-### Motores e sensores
+As rotas estão catalogadas em
+[docs/api-routes.md](docs/api-routes.md). O documento OpenAPI gerado durante o
+desenvolvimento também pode ser consultado em
+`http://localhost:5281/openapi/v1.json`.
+
+### Resumo
 
 | Método | Caminho | Descrição |
 |---|---|---|
 | `POST` | `/api/motores` | Cadastra um motor e seus sensores iniciais |
 | `GET` | `/api/motores` | Lista motores |
-| `GET` | `/api/motores/{id}` | Obtém um motor e seus sensores |
+| `GET` | `/api/motores/{id}` | Obtém um motor |
 | `DELETE` | `/api/motores/{id}` | Exclui um motor |
-| `GET` | `/api/sensores/{id}` | Obtém um sensor |
 | `POST` | `/api/sensores` | Cadastra um sensor |
-| `POST` | `/api/motores/sensores/{sensorId}/ping` | Atualiza os dados de conexão do sensor |
-
-### Telemetria
-
-| Método | Caminho | Descrição |
-|---|---|---|
+| `GET` | `/api/sensores/{sensorId}` | Obtém um sensor |
+| `POST` | `/api/motores/sensores/{sensorId}/ping` | Registra o ping de um sensor |
 | `POST` | `/api/leituras` | Valida e enfileira um lote de telemetria |
 | `GET` | `/api/leituras` | Consulta a leitura mais recente |
+| `POST` | `/api/regras-qualidade` | Cria uma regra de qualidade |
+| `GET` | `/api/regras-qualidade` | Lista as regras |
+| `GET` | `/api/regras-qualidade/{id}` | Obtém uma regra |
+| `PUT` | `/api/regras-qualidade/{id}` | Edita uma regra |
+| `DELETE` | `/api/regras-qualidade/{id}` | Exclui uma regra e seus vínculos |
+| `GET` | `/api/motores/{motorId}/regras-qualidade` | Lista vínculos |
+| `GET` | `/api/motores/{motorId}/regras-qualidade/{regraId}` | Obtém um vínculo |
+| `POST` | `/api/motores/{motorId}/regras-qualidade/{regraId}` | Cria um vínculo |
+| `PUT` | `/api/motores/{motorId}/regras-qualidade/{regraId}` | Atualiza o vínculo |
+| `DELETE` | `/api/motores/{motorId}/regras-qualidade/{regraId}` | Remove um vínculo |
 
 O POST de telemetria retorna `202 Accepted` quando o lote entra na fila.
 Validação, avaliação dos Quality Gates, persistência e publicação SignalR
-ocorrem depois, no worker.
-
-### Regras de qualidade
-
-| Método | Caminho | Descrição |
-|---|---|---|
-| `POST` | `/api/regras-qualidade` | Cria uma regra de limiar térmico |
-| `GET` | `/api/regras-qualidade` | Lista o catálogo de regras |
-| `GET` | `/api/regras-qualidade/{id}` | Obtém uma regra |
-| `PUT` | `/api/regras-qualidade/{id}` | Edita uma regra |
-| `DELETE` | `/api/regras-qualidade/{id}` | Exclui a regra e seus vínculos |
-| `GET` | `/api/motores/{motorId}/regras-qualidade` | Lista os vínculos do motor |
-| `GET` | `/api/motores/{motorId}/regras-qualidade/{regraId}` | Obtém um vínculo |
-| `POST` | `/api/motores/{motorId}/regras-qualidade/{regraId}` | Associa uma regra ao motor |
-| `PUT` | `/api/motores/{motorId}/regras-qualidade/{regraId}` | Ativa ou desativa o vínculo |
-| `DELETE` | `/api/motores/{motorId}/regras-qualidade/{regraId}` | Remove somente o vínculo |
-
-Atualmente, o catálogo aceita a estratégia `temperatura.limiar_estatico`.
-Os resultados dos gates são incluídos nos eventos SignalR, mas não são
-persistidos como histórico.
+ocorrem depois, no worker. O catálogo aceita atualmente a estratégia
+`temperatura.limiar_estatico`.
 
 ## Atualizações em tempo real
 
 O hub SignalR está disponível em `/api/telemetriaHub`. Os eventos enviados aos
 clientes são `ReceberLoteTelemetria` e `ReceberTelemetria`. Os DTOs incluem as
-leituras e os resultados das regras avaliadas.
+leituras e os resultados das regras avaliadas. O contrato completo está em
+[docs/signalr-contract.md](docs/signalr-contract.md).
 
 ## Migrations
 
@@ -185,7 +197,7 @@ principais e para cada pull request.
   disponível.
 - `GET /health/ready`: verifica a conexão com o PostgreSQL e o estado da fila.
 - As métricas `hackatohm.telemetria.*` registram aceitas, rejeitadas,
-  processadas, falhas e o tamanho atual da fila através de `System.Diagnostics.Metrics`.
+  processadas e falhas através de `System.Diagnostics.Metrics`.
 
 ## Contratos versionados
 
