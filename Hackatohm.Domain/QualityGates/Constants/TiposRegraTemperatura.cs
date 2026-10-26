@@ -21,4 +21,10 @@ public static class TiposRegraTemperatura
     /// Assimetrias térmicas indicam desgaste irregular ou sobrecarga pontual.
     /// </summary>
     public const string AssimetriaEscovas = "temperatura.assimetria_escovas";
+
+    /// <summary>
+    /// Avalia a previsão de desgaste em ml com base na temperatura e histórico de leituras.
+    /// Sendo uma avaliação feita por machine learning, a implementação desta regra ainda não está disponível.
+    /// </summary>
+    public const string PrevisaoDesgasteMl = "temperatura.previsao_desgaste_ml";
 }
