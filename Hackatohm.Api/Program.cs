@@ -1,4 +1,5 @@
 using Hackatohm.Infrastructure.Persistence;
+using Hackatohm.Application.QualityGates;
 using Hackatohm.Api.Errors;
 using Hackatohm.Api.Hubs;
 using Hackatohm.Domain.QualityGates;

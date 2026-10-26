@@ -1,5 +1,6 @@
 ﻿using Hackatohm.Application.Abstractions.Persistence;
 using Hackatohm.Domain.Entities;
+using Hackatohm.Application.QualityGates;
 using Hackatohm.Domain.QualityGates.Constants;
 using Hackatohm.Domain.QualityGates.Enums;
 using Hackatohm.Domain.QualityGates;

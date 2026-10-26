@@ -1,11 +1,12 @@
-using Hackatohm.Application.Abstractions.Persistence;
+﻿using Hackatohm.Application.Abstractions.Persistence;
 using Hackatohm.Domain.Entities;
 using Hackatohm.Domain.QualityGates;
+using Microsoft.Extensions.Logging;
 
-namespace Hackatohm.Domain.QualityGates;
+namespace Hackatohm.Application.QualityGates;
 
 /// <summary>
-/// Localiza as regras ativas do motor e delega a avaliação às estratégias registradas.
+/// Localiza as regras ativas do motor e delega a avaliaÃ§Ã£o Ã s estratÃ©gias registradas.
 /// </summary>
 public sealed class QualityGateEvaluator(
     IRegraQualidadeRepository regraQualidadeRepository,
@@ -33,7 +34,7 @@ public sealed class QualityGateEvaluator(
                 StringComparer.OrdinalIgnoreCase);
 
         if (contextos.Any(contexto => contexto is null))
-            throw new ArgumentException("O lote não pode conter contextos nulos.", nameof(contextos));
+            throw new ArgumentException("O lote nÃ£o pode conter contextos nulos.", nameof(contextos));
 
         var regrasPorMotor = await regraQualidadeRepository.ObterAtivasPorMotoresAsync(
             [.. contextos.Select(contexto => contexto.Sensor.MotorId).Distinct()],
@@ -53,11 +54,11 @@ public sealed class QualityGateEvaluator(
                     if (!_regras.TryGetValue(regraConfigurada.TipoRegra, out var regra))
                     {
                         logger.LogError(
-                            "A regra de qualidade {RegraId} usa o tipo não registrado {TipoRegra}.",
+                            "A regra de qualidade {RegraId} usa o tipo nÃ£o registrado {TipoRegra}.",
                             regraConfigurada.Id,
                             regraConfigurada.TipoRegra);
                         throw new InvalidOperationException(
-                            $"Não há uma implementação registrada para a regra '{regraConfigurada.TipoRegra}' (ID {regraConfigurada.Id}).");
+                            $"NÃ£o hÃ¡ uma implementaÃ§Ã£o registrada para a regra '{regraConfigurada.TipoRegra}' (ID {regraConfigurada.Id}).");
                     }
 
                     var resultado = await regra.AvaliarAsync(contexto, regraConfigurada.ParametrosJson);
@@ -67,7 +68,7 @@ public sealed class QualityGateEvaluator(
 
             if (!resultadosPorSensor.TryAdd(contexto.Sensor.Id, resultados))
                 throw new ArgumentException(
-                    $"O lote contém mais de um contexto para o sensor '{contexto.Sensor.Id}'.",
+                    $"O lote contÃ©m mais de um contexto para o sensor '{contexto.Sensor.Id}'.",
                     nameof(contextos));
         }
 
@@ -85,7 +86,7 @@ public sealed class QualityGateEvaluator(
             if (!indice.TryAdd(regra.TipoRegra, regra))
             {
                 throw new InvalidOperationException(
-                    $"Há mais de uma implementação registrada para a regra '{regra.TipoRegra}'.");
+                    $"HÃ¡ mais de uma implementaÃ§Ã£o registrada para a regra '{regra.TipoRegra}'.");
             }
         }
 
