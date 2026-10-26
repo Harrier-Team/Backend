@@ -1,4 +1,4 @@
-using System.Diagnostics.Metrics;
+﻿using System.Diagnostics.Metrics;
 namespace Hackatohm.Api.Observability;
 
 public sealed class TelemetriaMetrics : IDisposable

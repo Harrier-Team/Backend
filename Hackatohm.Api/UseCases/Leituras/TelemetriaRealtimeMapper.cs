@@ -1,6 +1,6 @@
-using Hackatohm.Api.DTOs.Hubs;
-using Hackatohm.Api.Entities;
-using Hackatohm.Api.QualityGates.Models;
+﻿using Hackatohm.Api.DTOs.Hubs;
+using Hackatohm.Domain.Entities;
+using Hackatohm.Domain.QualityGates;
 
 namespace Hackatohm.Api.UseCases.Leituras;
 

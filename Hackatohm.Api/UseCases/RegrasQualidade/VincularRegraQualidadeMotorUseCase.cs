@@ -1,6 +1,6 @@
-using Hackatohm.Api.Data.Interfaces;
+using Hackatohm.Application.Abstractions.Persistence;
 using Hackatohm.Api.DTOs;
-using Hackatohm.Api.Entities;
+using Hackatohm.Domain.Entities;
 using Hackatohm.Api.Errors;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;

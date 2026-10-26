@@ -1,7 +1,7 @@
-using Hackatohm.Api.Data;
+using Hackatohm.Infrastructure.Persistence;
 using Hackatohm.Api.Errors;
 using Hackatohm.Api.Hubs;
-using Hackatohm.Api.QualityGates;
+using Hackatohm.Domain.QualityGates;
 using Hackatohm.Api.Queues;
 using Hackatohm.Api.Observability;
 using Hackatohm.Api.UseCases;

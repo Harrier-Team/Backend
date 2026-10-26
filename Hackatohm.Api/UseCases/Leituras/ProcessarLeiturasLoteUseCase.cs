@@ -1,9 +1,8 @@
-using Hackatohm.Api.Data.Interfaces;
+using Hackatohm.Application.Abstractions.Persistence;
 using Hackatohm.Api.DTOs;
-using Hackatohm.Api.Entities;
+using Hackatohm.Domain.Entities;
 using Hackatohm.Api.Hubs;
-using Hackatohm.Api.QualityGates;
-using Hackatohm.Api.QualityGates.Models;
+using Hackatohm.Domain.QualityGates;
 using Microsoft.AspNetCore.SignalR;
 using Hackatohm.Api.Queues;
 

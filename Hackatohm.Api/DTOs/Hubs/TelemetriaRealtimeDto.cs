@@ -1,4 +1,4 @@
-namespace Hackatohm.Api.DTOs.Hubs;
+﻿namespace Hackatohm.Api.DTOs.Hubs;
 
 /// <summary>Representa uma leitura de telemetria publicada em tempo real.</summary>
 public sealed record TelemetriaRealtimeDto(

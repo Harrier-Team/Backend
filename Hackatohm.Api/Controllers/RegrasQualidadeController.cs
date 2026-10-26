@@ -1,4 +1,4 @@
-using Hackatohm.Api.DTOs;
+﻿using Hackatohm.Api.DTOs;
 using Hackatohm.Api.Errors;
 using Hackatohm.Api.UseCases.RegrasQualidade;
 using Microsoft.AspNetCore.Mvc;

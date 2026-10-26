@@ -1,8 +1,8 @@
-using Hackatohm.Api.Data.Interfaces;
-using Hackatohm.Api.Entities;
-using Hackatohm.Api.QualityGates.Models;
+using Hackatohm.Application.Abstractions.Persistence;
+using Hackatohm.Domain.Entities;
+using Hackatohm.Domain.QualityGates;
 
-namespace Hackatohm.Api.QualityGates;
+namespace Hackatohm.Domain.QualityGates;
 
 /// <summary>
 /// Localiza as regras ativas do motor e delega a avaliação às estratégias registradas.

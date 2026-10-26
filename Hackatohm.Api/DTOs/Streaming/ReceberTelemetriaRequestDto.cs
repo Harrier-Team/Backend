@@ -1,3 +1,5 @@
+﻿using Hackatohm.Domain.QualityGates;
+
 namespace Hackatohm.Api.DTOs;
 
 /// <summary>Payload enviado por um dispositivo com as leituras do lote.</summary>

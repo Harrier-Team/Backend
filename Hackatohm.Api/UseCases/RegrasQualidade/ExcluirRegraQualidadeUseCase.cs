@@ -1,5 +1,5 @@
 using FluentValidation;
-using Hackatohm.Api.Data.Interfaces;
+using Hackatohm.Application.Abstractions.Persistence;
 
 namespace Hackatohm.Api.UseCases.RegrasQualidade;
 

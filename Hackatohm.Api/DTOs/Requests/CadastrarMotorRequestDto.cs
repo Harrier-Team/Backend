@@ -1,4 +1,4 @@
-namespace Hackatohm.Api.DTOs;
+﻿namespace Hackatohm.Api.DTOs;
 
 public record CadastrarMotorRequestDto(
     string Nome,

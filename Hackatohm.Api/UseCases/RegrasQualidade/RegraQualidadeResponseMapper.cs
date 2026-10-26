@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Hackatohm.Api.DTOs;
-using Hackatohm.Api.Entities;
-using Hackatohm.Api.QualityGates.Rules;
+using Hackatohm.Domain.Entities;
+using Hackatohm.Domain.QualityGates.Rules;
 
 namespace Hackatohm.Api.UseCases.RegrasQualidade;
 

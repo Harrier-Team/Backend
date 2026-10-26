@@ -1,4 +1,4 @@
-namespace Hackatohm.Api.Errors;
+﻿namespace Hackatohm.Api.Errors;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public sealed class ApiErrorAudienceAttribute(ApiClientAudience audience) : Attribute

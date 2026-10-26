@@ -1,4 +1,4 @@
-namespace Hackatohm.Api.Hubs;
+﻿namespace Hackatohm.Api.Hubs;
 
 using Hackatohm.Api.DTOs.Hubs;
 

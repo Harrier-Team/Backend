@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using Hackatohm.Api.Validation;
 using Hackatohm.Api.UseCases.Leituras;
 using Hackatohm.Api.UseCases.Motores;

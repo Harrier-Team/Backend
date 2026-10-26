@@ -1,4 +1,4 @@
-namespace Hackatohm.Api.DTOs;
+﻿namespace Hackatohm.Api.DTOs;
 
 /// <summary>Dados para editar uma regra de limiar de temperatura existente.</summary>
 public sealed record EditarRegraQualidadeRequestDto : IRegraQualidadeRequestDto

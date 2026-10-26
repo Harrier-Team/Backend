@@ -1,7 +1,7 @@
-using FluentValidation;
-using Hackatohm.Api.Data.Interfaces;
+﻿using FluentValidation;
+using Hackatohm.Application.Abstractions.Persistence;
 using Hackatohm.Api.DTOs;
-using Hackatohm.Api.Entities;
+using Hackatohm.Domain.Entities;
 
 namespace Hackatohm.Api.UseCases.Leituras;
 

@@ -1,5 +1,5 @@
-using Hackatohm.Api.DTOs;
-using Hackatohm.Api.Entities;
+﻿using Hackatohm.Api.DTOs;
+using Hackatohm.Domain.Entities;
 
 namespace Hackatohm.Api.UseCases.Motores;
 

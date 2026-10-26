@@ -1,6 +1,6 @@
-using Hackatohm.Api.QualityGates.Rules;
+﻿using Hackatohm.Domain.QualityGates.Rules;
 
-namespace Hackatohm.Api.QualityGates;
+namespace Hackatohm.Domain.QualityGates;
 
 public static class DependencyInjection
 {

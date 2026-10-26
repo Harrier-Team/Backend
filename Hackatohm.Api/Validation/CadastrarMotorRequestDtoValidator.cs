@@ -1,6 +1,6 @@
 using FluentValidation;
 using Hackatohm.Api.DTOs;
-using Hackatohm.Api.Entities;
+using Hackatohm.Domain.Entities;
 
 namespace Hackatohm.Api.Validation;
 

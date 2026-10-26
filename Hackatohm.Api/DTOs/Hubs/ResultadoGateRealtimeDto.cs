@@ -1,4 +1,4 @@
-using Hackatohm.Api.QualityGates.Enums;
+using Hackatohm.Domain.QualityGates.Enums;
 
 namespace Hackatohm.Api.DTOs.Hubs;
 

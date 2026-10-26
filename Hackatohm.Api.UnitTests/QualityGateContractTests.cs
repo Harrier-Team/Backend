@@ -3,9 +3,10 @@ using System.Text.Json.Serialization;
 using FluentValidation;
 using Hackatohm.Api.DTOs;
 using Hackatohm.Api.DTOs.Hubs;
-using Hackatohm.Api.Entities;
-using Hackatohm.Api.QualityGates.Enums;
-using Hackatohm.Api.QualityGates.Rules;
+using Hackatohm.Domain.Entities;
+using Hackatohm.Domain.QualityGates.Enums;
+using Hackatohm.Domain.QualityGates;
+using Hackatohm.Domain.QualityGates.Rules;
 using Hackatohm.Api.Validation;
 
 namespace Hackatohm.Api.UnitTests;
@@ -148,7 +149,7 @@ public sealed class QualityGateContractTests
         Assert.Contains("\"metadados\":null", json);
     }
 
-    private static QualityGates.Models.ContextoAvaliacao CriarContexto(double temperatura) =>
+    private static ContextoAvaliacao CriarContexto(double temperatura) =>
         new(
             new Sensor
             {

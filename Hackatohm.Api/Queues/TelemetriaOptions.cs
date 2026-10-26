@@ -1,4 +1,4 @@
-namespace Hackatohm.Api.Queues;
+﻿namespace Hackatohm.Api.Queues;
 
 public sealed class TelemetriaOptions
 {

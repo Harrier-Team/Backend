@@ -1,10 +1,9 @@
-using Hackatohm.Api.Data.Interfaces;
-using Hackatohm.Api.Entities;
-using Hackatohm.Api.QualityGates;
-using Hackatohm.Api.QualityGates.Constants;
-using Hackatohm.Api.QualityGates.Enums;
-using Hackatohm.Api.QualityGates.Models;
-using Hackatohm.Api.QualityGates.Rules;
+﻿using Hackatohm.Application.Abstractions.Persistence;
+using Hackatohm.Domain.Entities;
+using Hackatohm.Domain.QualityGates.Constants;
+using Hackatohm.Domain.QualityGates.Enums;
+using Hackatohm.Domain.QualityGates;
+using Hackatohm.Domain.QualityGates.Rules;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Hackatohm.Api.UnitTests;
@@ -64,7 +63,7 @@ public sealed class QualityGateEvaluatorTests
     private static ContextoAvaliacao CriarContexto(double temperatura = 75) =>
         new(
             new Sensor { Id = "AA:BB_Escova1", NumeroEscova = 1, MotorId = 12 },
-            new DTOs.LeituraTelemetriaDto { NumeroEscova = 1, Temperatura = temperatura },
+            new LeituraTelemetriaDto { NumeroEscova = 1, Temperatura = temperatura },
             DateTimeOffset.UtcNow);
 
     private static RegraQualidade CriarRegra(string nome, double aviso, double critico) =>

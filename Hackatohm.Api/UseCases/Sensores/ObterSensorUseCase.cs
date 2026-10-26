@@ -1,5 +1,5 @@
-using FluentValidation;
-using Hackatohm.Api.Data.Interfaces;
+﻿using FluentValidation;
+using Hackatohm.Application.Abstractions.Persistence;
 using Hackatohm.Api.DTOs;
 
 namespace Hackatohm.Api.UseCases.Sensores;

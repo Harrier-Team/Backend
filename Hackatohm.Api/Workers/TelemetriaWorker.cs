@@ -1,4 +1,4 @@
-using Hackatohm.Api.Queues;
+﻿using Hackatohm.Api.Queues;
 using Hackatohm.Api.UseCases.Leituras;
 
 namespace Hackatohm.Api.Workers;

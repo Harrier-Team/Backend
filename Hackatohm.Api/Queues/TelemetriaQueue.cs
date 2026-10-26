@@ -1,4 +1,4 @@
-using System.Threading.Channels;
+﻿using System.Threading.Channels;
 using Hackatohm.Api.Observability;
 using Microsoft.Extensions.Options;
 

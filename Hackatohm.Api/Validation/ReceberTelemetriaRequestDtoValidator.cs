@@ -1,5 +1,6 @@
 using FluentValidation;
 using Hackatohm.Api.DTOs;
+using Hackatohm.Domain.QualityGates;
 using Hackatohm.Api.Queues;
 using Microsoft.Extensions.Options;
 

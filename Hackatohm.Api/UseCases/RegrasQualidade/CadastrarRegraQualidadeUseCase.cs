@@ -1,9 +1,9 @@
-using FluentValidation;
-using Hackatohm.Api.Data.Interfaces;
+﻿using FluentValidation;
+using Hackatohm.Application.Abstractions.Persistence;
 using Hackatohm.Api.DTOs;
-using Hackatohm.Api.Entities;
-using Hackatohm.Api.QualityGates.Constants;
-using Hackatohm.Api.QualityGates.Rules;
+using Hackatohm.Domain.Entities;
+using Hackatohm.Domain.QualityGates.Constants;
+using Hackatohm.Domain.QualityGates.Rules;
 using System.Text.Json;
 
 namespace Hackatohm.Api.UseCases.RegrasQualidade;

@@ -1,4 +1,4 @@
-using Hackatohm.Api.Data;
+using Hackatohm.Infrastructure.Persistence;
 using Hackatohm.Api.Queues;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;

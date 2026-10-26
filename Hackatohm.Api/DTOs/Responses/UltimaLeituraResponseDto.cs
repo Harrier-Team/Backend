@@ -1,4 +1,4 @@
-namespace Hackatohm.Api.DTOs;
+﻿namespace Hackatohm.Api.DTOs;
 
 /// <summary>Representa a leitura mais recente de um sensor.</summary>
 public sealed record UltimaLeituraResponseDto(

@@ -1,4 +1,4 @@
-namespace Hackatohm.Api.Errors;
+﻿namespace Hackatohm.Api.Errors;
 
 public sealed class ApiConflictException(
     ApiErrorDefinition error,

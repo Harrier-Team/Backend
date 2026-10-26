@@ -2,4 +2,7 @@
   <Project Path="Hackatohm.Api.IntegrationTests/Hackatohm.Api.IntegrationTests.csproj" />
   <Project Path="Hackatohm.Api.UnitTests/Hackatohm.Api.UnitTests.csproj" />
   <Project Path="Hackatohm.Api/Hackatohm.Api.csproj" />
+  <Project Path="Hackatohm.Application/Hackatohm.Application.csproj" />
+  <Project Path="Hackatohm.Domain/Hackatohm.Domain.csproj" />
+  <Project Path="Hackatohm.Infrastructure/Hackatohm.Infrastructure.csproj" />
 </Solution>
