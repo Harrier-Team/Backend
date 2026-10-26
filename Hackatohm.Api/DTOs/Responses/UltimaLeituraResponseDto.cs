@@ -5,4 +5,6 @@ public sealed record UltimaLeituraResponseDto(
     string SensorId,
     double ValorCelsius,
     DateTimeOffset DataHora,
-    bool AlertaDesgaste);
+    bool AlertaDesgaste,
+    int MotorId,
+    IReadOnlyList<Hubs.ResultadoGateRealtimeDto> ResultadosQualityGates);

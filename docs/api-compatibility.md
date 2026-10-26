@@ -42,3 +42,10 @@ inválido. Quando a fila está cheia, a API responde `503` com `Retry-After`.
 Ainda não há idempotência persistente: o protocolo atual não fornece uma chave
 de mensagem do dispositivo. Antes de ativá-la, o dispositivo e a API devem
 concordar sobre uma chave estável, sua retenção e o comportamento para reenvios.
+
+## Última leitura
+
+`GET /api/leituras` retorna a última leitura persistida junto com `motorId` e
+`resultadosQualityGates`. Os gates são reavaliados no momento da consulta com
+as regras atualmente ativas e vinculadas ao motor; os resultados históricos
+dos gates não são persistidos nesta versão.

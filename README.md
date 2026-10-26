@@ -129,7 +129,7 @@ desenvolvimento também pode ser consultado em
 | `GET` | `/api/sensores/{sensorId}` | Obtém um sensor |
 | `POST` | `/api/motores/sensores/{sensorId}/ping` | Registra o ping de um sensor |
 | `POST` | `/api/leituras` | Valida e enfileira um lote de telemetria |
-| `GET` | `/api/leituras` | Consulta a leitura mais recente |
+| `GET` | `/api/leituras` | Consulta a leitura mais recente e seus Quality Gates |
 | `POST` | `/api/regras-qualidade` | Cria uma regra de qualidade |
 | `GET` | `/api/regras-qualidade` | Lista as regras |
 | `GET` | `/api/regras-qualidade/{id}` | Obtém uma regra |

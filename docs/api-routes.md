@@ -31,11 +31,16 @@ As rotas retornam `404` quando o sensor ou o motor referenciado não existe.
 | Método | Rota | Sucesso | Descrição |
 |---|---|---:|---|
 | `POST` | `/api/leituras` | `202` | Valida e enfileira um lote enviado pelo dispositivo. |
-| `GET` | `/api/leituras` | `200` | Consulta a leitura mais recente por sensor. |
+| `GET` | `/api/leituras` | `200` | Consulta a leitura mais recente por sensor e reavalia seus Quality Gates. |
 
 O POST retorna `400` para payload inválido e `503` quando a fila está cheia.
 Nesse último caso, a resposta inclui `Retry-After: 5`. A avaliação dos gates, a
 persistência e a publicação SignalR acontecem de forma assíncrona.
+
+A resposta do `GET /api/leituras` inclui `motorId` e
+`resultadosQualityGates`. Os gates são reavaliados usando a última leitura
+persistida e as regras atualmente ativas do motor. A lista sempre é retornada,
+inclusive vazia quando não existem regras aplicáveis.
 
 ## Catálogo de Quality Gates
 
