@@ -49,7 +49,7 @@ public sealed class LeituraTelemetriaDtoValidator : AbstractValidator<LeituraTel
             .Cascade(CascadeMode.Stop)
             .Must(double.IsFinite)
             .WithMessage("A temperatura deve ser um número finito.")
-            .InclusiveBetween(-55, 125)
-            .WithMessage("A temperatura deve estar entre -55 °C e 125 °C.");
+            .InclusiveBetween(-55, 200)
+            .WithMessage("A temperatura deve estar entre -55 °C e 200 °C.");
     }
 }

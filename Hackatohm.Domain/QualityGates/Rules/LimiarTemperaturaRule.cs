@@ -28,9 +28,9 @@ public class LimiarTemperaturaRule : IQualityGateRule
         if (!double.IsFinite(config.Aviso) ||
             !double.IsFinite(config.Critico) ||
             config.Aviso < -55 ||
-            config.Aviso > 125 ||
+            config.Aviso > 200 ||
             config.Critico < -55 ||
-            config.Critico > 125 ||
+            config.Critico > 200 ||
             config.Aviso >= config.Critico)
         {
             throw new InvalidOperationException("A configuração da regra de limiar é inválida.");
