@@ -50,9 +50,9 @@ public abstract class RegraQualidadeRequestValidator<TRequest> : AbstractValidat
         double.IsFinite(parametros.Critico) &&
         (tipoRegra == TiposRegraTemperatura.LimiarEstatico
             ? parametros.Aviso >= -55 &&
-              parametros.Aviso <= 125 &&
+              parametros.Aviso <= 200 &&
               parametros.Critico >= -55 &&
-              parametros.Critico <= 125
+              parametros.Critico <= 200
             : parametros.Aviso >= 0 &&
               parametros.Critico >= 0) &&
         parametros.Aviso < parametros.Critico;
