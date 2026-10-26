@@ -22,5 +22,5 @@ public class MotorRegraQualidade
     /// <summary>
     /// Data e hora UTC em que a regra foi vinculada ao motor.
     /// </summary>
-    public DateTime VinculadoEm { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset VinculadoEm { get; set; } = DateTimeOffset.UtcNow;
 }

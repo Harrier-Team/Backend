@@ -52,11 +52,10 @@ public class RegraQualidade
     /// <summary>
     /// Data e hora UTC em que a regra foi registrada no catálogo.
     /// </summary>
-    public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset CriadoEm { get; set; } = DateTimeOffset.UtcNow;
 
     /// <summary>
     /// Coleção de vínculos entre esta regra e os motores do sistema.
     /// </summary>
     public ICollection<MotorRegraQualidade> MotoresVinculados { get; set; } = [];
 }
-

@@ -9,7 +9,7 @@ public class Sensor
     public int NumeroEscova { get; set; }
     public string Modelo { get; set; } = string.Empty;
     public string? IpAtual { get; set; }
-    public DateTime? UltimaConexao { get; set; }
+    public DateTimeOffset? UltimaConexao { get; set; }
     
     // Chave Estrangeira
     public int MotorId { get; set; }

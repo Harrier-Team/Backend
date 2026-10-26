@@ -33,7 +33,7 @@ namespace Hackatohm.Api.Migrations
                     b.Property<bool>("AlertaDesgaste")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTime>("DataHora")
+                    b.Property<DateTimeOffset>("DataHora")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("SensorId")
@@ -85,7 +85,7 @@ namespace Hackatohm.Api.Migrations
                     b.Property<bool>("Ativo")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTime>("VinculadoEm")
+                    b.Property<DateTimeOffset>("VinculadoEm")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("MotorId", "RegraQualidadeId");
@@ -106,7 +106,7 @@ namespace Hackatohm.Api.Migrations
                     b.Property<bool>("Ativo")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTime>("CriadoEm")
+                    b.Property<DateTimeOffset>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Descricao")
@@ -156,7 +156,7 @@ namespace Hackatohm.Api.Migrations
                     b.Property<int>("NumeroEscova")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime?>("UltimaConexao")
+                    b.Property<DateTimeOffset?>("UltimaConexao")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");

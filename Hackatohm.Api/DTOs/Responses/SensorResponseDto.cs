@@ -1,8 +1,9 @@
 namespace Hackatohm.Api.DTOs;
 
-public record SensorResponseDto(
+/// <summary>Representa um sensor retornado pela API.</summary>
+public sealed record SensorResponseDto(
     string Id,
     int NumeroEscova,
     string Modelo,
     string? IpAtual,
-    DateTime? UltimaConexao);
+    DateTimeOffset? UltimaConexao);

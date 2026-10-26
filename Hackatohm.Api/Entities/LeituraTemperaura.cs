@@ -7,6 +7,6 @@ public class LeituraTemperatura
     public Sensor Sensor { get; set; } = null!;
     
     public double ValorCelsius { get; set; }
-    public DateTime DataHora { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset DataHora { get; set; } = DateTimeOffset.UtcNow;
     public bool AlertaDesgaste { get; set; } // Flag para facilitar filtros no frontend
 }

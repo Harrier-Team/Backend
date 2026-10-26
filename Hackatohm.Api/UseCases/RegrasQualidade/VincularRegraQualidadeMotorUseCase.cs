@@ -43,7 +43,7 @@ public sealed class VincularRegraQualidadeMotorUseCase(
             MotorId = motorId,
             RegraQualidadeId = regraId,
             Ativo = request.Ativo,
-            VinculadoEm = DateTime.UtcNow,
+            VinculadoEm = DateTimeOffset.UtcNow,
             RegraQualidade = regra
         };
 

@@ -15,7 +15,7 @@ namespace Hackatohm.Api.QualityGates.Models;
 public record ContextoAvaliacao(
     Sensor Sensor,
     LeituraTelemetriaDto LeituraAtual,
-    DateTime DataHora,
+    DateTimeOffset DataHora,
     IReadOnlyList<LeituraTelemetriaDto>? LeiturasIrmasDoLote = null,
     double? TemperaturaAnterior = null,
     TimeSpan? IntervaloDesdeUltimaLeitura = null

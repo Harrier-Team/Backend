@@ -21,7 +21,7 @@ public sealed class ReceberTelemetriaUseCase(
         string requestId,
         CancellationToken cancellationToken = default)
     {
-        var dataRecebimento = DateTime.UtcNow;
+        var dataRecebimento = DateTimeOffset.UtcNow;
         await validator.ValidateAndThrowAsync(payload, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 

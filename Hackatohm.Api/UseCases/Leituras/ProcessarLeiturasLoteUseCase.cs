@@ -127,28 +127,13 @@ public class ProcessarLeiturasLoteUseCase(
             leiturasParaSalvar.Count,
             ipAtual ?? "IP indisponível");
 
-        var dtosRealtime = leiturasParaSalvar.Select(leitura => new TelemetriaRealtimeDto(
-            leitura.SensorId,
-            payload.EspMacAddress,
-            sensoresPorId[leitura.SensorId].NumeroEscova,
-            leitura.ValorCelsius,
-            leitura.DataHora,
-            leitura.AlertaDesgaste,
-            sensoresPorId[leitura.SensorId].MotorId,
-            resultadosPorSensor[leitura.SensorId]
-                .Select(resultado => new ResultadoGateRealtimeDto(
-                    resultado.RegraQualidadeId!.Value,
-                    resultado.NomeRegra!,
-                    resultado.DisparouAlerta,
-                    resultado.Severidade,
-                    resultado.TipoRegra,
-                    resultado.CodigoRegra,
-                    resultado.MensagemDiagnostico,
-                    resultado.ValorObservado,
-                    resultado.ValorLimite,
-                    resultado.Metadados))
-                .ToArray()
-        )).ToList();
+        var dtosRealtime = leiturasParaSalvar
+            .Select(leitura => CriarTelemetriaRealtimeDto(
+                leitura,
+                payload.EspMacAddress,
+                sensoresPorId[leitura.SensorId],
+                resultadosPorSensor[leitura.SensorId]))
+            .ToList();
 
         try
         {
@@ -169,4 +154,31 @@ public class ProcessarLeiturasLoteUseCase(
             alertaDetectado: leiturasParaSalvar.Any(leitura => leitura.AlertaDesgaste)
         );
     }
+
+    private static TelemetriaRealtimeDto CriarTelemetriaRealtimeDto(
+        LeituraTemperatura leitura,
+        string espMacAddress,
+        Sensor sensor,
+        IReadOnlyList<ResultadoGateQualidade> resultados) =>
+        new(
+            leitura.SensorId,
+            espMacAddress,
+            sensor.NumeroEscova,
+            leitura.ValorCelsius,
+            leitura.DataHora,
+            leitura.AlertaDesgaste,
+            sensor.MotorId,
+            resultados
+                .Select(resultado => new ResultadoGateRealtimeDto(
+                    resultado.RegraQualidadeId!.Value,
+                    resultado.NomeRegra!,
+                    resultado.DisparouAlerta,
+                    resultado.Severidade,
+                    resultado.TipoRegra,
+                    resultado.CodigoRegra,
+                    resultado.MensagemDiagnostico,
+                    resultado.ValorObservado,
+                    resultado.ValorLimite,
+                    resultado.Metadados))
+                .ToArray());
 }

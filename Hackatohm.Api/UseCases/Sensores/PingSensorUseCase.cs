@@ -22,7 +22,7 @@ public sealed class PingSensorUseCase(
         if (request.IpAddress is not null)
             sensor.IpAtual = request.IpAddress;
 
-        sensor.UltimaConexao = DateTime.UtcNow;
+        sensor.UltimaConexao = DateTimeOffset.UtcNow;
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return true;
     }

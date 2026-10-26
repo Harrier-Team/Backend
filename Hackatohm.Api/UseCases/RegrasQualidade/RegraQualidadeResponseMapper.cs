@@ -24,7 +24,7 @@ internal static class RegraQualidadeResponseMapper
             regra.SeveridadePadrao,
             new(parametros.Aviso, parametros.Critico),
             regra.Ativo,
-            new DateTimeOffset(DateTime.SpecifyKind(regra.CriadoEm, DateTimeKind.Utc)));
+            regra.CriadoEm);
     }
 
     public static VinculoRegraQualidadeResponseDto Mapear(MotorRegraQualidade vinculo) =>
@@ -32,6 +32,6 @@ internal static class RegraQualidadeResponseMapper
             vinculo.MotorId,
             vinculo.RegraQualidadeId,
             vinculo.Ativo,
-            new DateTimeOffset(DateTime.SpecifyKind(vinculo.VinculadoEm, DateTimeKind.Utc)),
+            vinculo.VinculadoEm,
             Mapear(vinculo.RegraQualidade));
 }
