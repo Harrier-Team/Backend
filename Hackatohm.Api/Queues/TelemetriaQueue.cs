@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using Hackatohm.Api.Observability;
 using Microsoft.Extensions.Options;
 
 namespace Hackatohm.Api.Queues;
@@ -7,13 +8,17 @@ public sealed class TelemetriaQueue
 {
     private readonly Channel<TelemetriaRecebida> _channel;
     private readonly int _capacity;
+    private readonly TelemetriaMetrics _metrics;
     private long _acceptedCount;
     private long _rejectedCount;
     private long _processedCount;
     private long _failedCount;
 
-    public TelemetriaQueue(IOptions<TelemetriaOptions> options)
+    public TelemetriaQueue(
+        IOptions<TelemetriaOptions> options,
+        TelemetriaMetrics metrics)
     {
+        _metrics = metrics;
         var settings = options.Value;
         if (settings.QueueCapacity <= 0)
             throw new InvalidOperationException("Telemetria:QueueCapacity deve ser positivo.");
@@ -32,16 +37,30 @@ public sealed class TelemetriaQueue
     {
         var accepted = _channel.Writer.TryWrite(telemetria);
         if (accepted)
+        {
             Interlocked.Increment(ref _acceptedCount);
+            _metrics.Accepted();
+        }
         else
+        {
             Interlocked.Increment(ref _rejectedCount);
+            _metrics.Rejected();
+        }
 
         return accepted;
     }
 
-    public void MarkProcessed() => Interlocked.Increment(ref _processedCount);
+    public void MarkProcessed()
+    {
+        Interlocked.Increment(ref _processedCount);
+        _metrics.Processed();
+    }
 
-    public void MarkFailed() => Interlocked.Increment(ref _failedCount);
+    public void MarkFailed()
+    {
+        Interlocked.Increment(ref _failedCount);
+        _metrics.Failed();
+    }
 
     public TelemetriaQueueSnapshot GetSnapshot() =>
         new(

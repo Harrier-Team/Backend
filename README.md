@@ -169,6 +169,14 @@ Os projetos de teste são organizados em:
 O pipeline de CI executa restore, build e testes para cada push nas branches
 principais e para cada pull request.
 
+## Saúde e métricas
+
+- `GET /health/live`: verifica se a aplicação está viva e se a fila está
+  disponível.
+- `GET /health/ready`: verifica a conexão com o PostgreSQL e o estado da fila.
+- As métricas `hackatohm.telemetria.*` registram aceitas, rejeitadas,
+  processadas, falhas e o tamanho atual da fila através de `System.Diagnostics.Metrics`.
+
 ## Contratos versionados
 
 O contrato dos eventos SignalR está documentado em

@@ -1,5 +1,6 @@
 using Hackatohm.Api.DTOs;
 using Hackatohm.Api.Queues;
+using Hackatohm.Api.Observability;
 using Hackatohm.Api.Validation;
 using Microsoft.Extensions.Options;
 
@@ -32,7 +33,8 @@ public sealed class TelemetriaIngestionTests
     public void Queue_RecusaMensagensAlemDaCapacidadeERegistraContadores()
     {
         var queue = new TelemetriaQueue(
-            Options.Create(new TelemetriaOptions { QueueCapacity = 1 }));
+            Options.Create(new TelemetriaOptions { QueueCapacity = 1 }),
+            new TelemetriaMetrics());
         var first = CriarTelemetria("request-1");
         var second = CriarTelemetria("request-2");
 

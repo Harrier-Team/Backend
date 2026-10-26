@@ -4,6 +4,7 @@ using Hackatohm.Api.UseCases.Leituras;
 using Hackatohm.Api.UseCases.Motores;
 using Hackatohm.Api.UseCases.RegrasQualidade;
 using Hackatohm.Api.UseCases.Sensores;
+using Hackatohm.Api.Observability;
 
 namespace Hackatohm.Api.UseCases;
 
@@ -12,6 +13,7 @@ public static class DependencyInjection
     public static IServiceCollection AddUseCases(this IServiceCollection services)
     {
         services.AddScoped<ProcessarLeiturasLoteUseCase>();
+        services.AddSingleton<TelemetriaMetrics>();
         services.AddScoped<ReceberTelemetriaUseCase>();
         services.AddScoped<ObterUltimaLeituraUseCase>();
         services.AddScoped<CadastrarMotorUseCase>();

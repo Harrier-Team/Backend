@@ -3,9 +3,11 @@ using Hackatohm.Api.Errors;
 using Hackatohm.Api.Hubs;
 using Hackatohm.Api.QualityGates;
 using Hackatohm.Api.Queues;
+using Hackatohm.Api.Observability;
 using Hackatohm.Api.UseCases;
 using Hackatohm.Api.Workers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -83,6 +85,10 @@ builder.Services.AddControllers()
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseHealthCheck>("postgresql", tags: ["ready"])
+    .AddCheck<TelemetriaQueueHealthCheck>("telemetria_queue", tags: ["live", "ready"]);
+
 builder.Services.AddSingleton<TelemetriaQueue>();
 builder.Services.AddHostedService<TelemetriaWorker>();
 builder.Services.AddRepositories();
@@ -106,6 +112,14 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.MapControllers();
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("live")
+});
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
 // Mapeia o Hub de WebSockets
 app.MapHub<TelemetriaHub>("/api/telemetriaHub");
 
