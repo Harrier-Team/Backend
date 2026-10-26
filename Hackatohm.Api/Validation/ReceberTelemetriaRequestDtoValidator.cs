@@ -1,12 +1,18 @@
 using FluentValidation;
 using Hackatohm.Api.DTOs;
+using Hackatohm.Api.Queues;
+using Microsoft.Extensions.Options;
 
 namespace Hackatohm.Api.Validation;
 
 public sealed class ReceberTelemetriaRequestDtoValidator : AbstractValidator<ReceberTelemetriaRequestDto>
 {
-    public ReceberTelemetriaRequestDtoValidator()
+    public ReceberTelemetriaRequestDtoValidator(IOptions<TelemetriaOptions>? options = null)
     {
+        var maxBatchSize = options?.Value.MaxBatchSize ?? 100;
+        if (maxBatchSize <= 0)
+            throw new InvalidOperationException("Telemetria:MaxBatchSize deve ser positivo.");
+
         RuleFor(payload => payload.EspMacAddress)
             .Cascade(CascadeMode.Stop)
             .NotEmpty()
@@ -18,6 +24,8 @@ public sealed class ReceberTelemetriaRequestDtoValidator : AbstractValidator<Rec
             .WithMessage("A lista de sensores é obrigatória.")
             .NotEmpty()
             .WithMessage("O lote deve conter pelo menos uma leitura.")
+            .Must(sensores => sensores is not null && sensores.Count <= maxBatchSize)
+            .WithMessage($"O lote não pode conter mais de {maxBatchSize} leituras.")
             .Must(sensores =>
                 sensores!.All(leitura => leitura is not null) &&
                 sensores.Select(leitura => leitura.NumeroEscova).Distinct().Count() == sensores.Count)

@@ -32,3 +32,13 @@ Respostas de erro para clientes HTTP usam Problem Details com:
 
 Clientes de dispositivos continuam recebendo o formato compacto de sucesso ou
 erro definido para ingestão.
+
+## Ingestão e capacidade
+
+O tamanho máximo do lote e a capacidade da fila são configurações explícitas
+do serviço. Lotes acima de `Telemetria:MaxBatchSize` são rejeitados como payload
+inválido. Quando a fila está cheia, a API responde `503` com `Retry-After`.
+
+Ainda não há idempotência persistente: o protocolo atual não fornece uma chave
+de mensagem do dispositivo. Antes de ativá-la, o dispositivo e a API devem
+concordar sobre uma chave estável, sua retenção e o comportamento para reenvios.

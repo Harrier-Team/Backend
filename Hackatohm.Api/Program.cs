@@ -35,6 +35,13 @@ builder.Services.AddSignalR(options =>
     options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
 });
 
+builder.Services
+    .AddOptions<TelemetriaOptions>()
+    .Bind(builder.Configuration.GetSection(TelemetriaOptions.SectionName))
+    .Validate(settings => settings.QueueCapacity > 0, "A capacidade da fila deve ser positiva.")
+    .Validate(settings => settings.MaxBatchSize > 0, "O tamanho máximo do lote deve ser positivo.")
+    .ValidateOnStart();
+
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers()

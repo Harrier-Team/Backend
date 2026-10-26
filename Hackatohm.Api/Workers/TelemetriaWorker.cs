@@ -18,6 +18,7 @@ public sealed class TelemetriaWorker(
                 var useCase = scope.ServiceProvider
                     .GetRequiredService<ProcessarLeiturasLoteUseCase>();
                 await useCase.ProcessarAsync(msg, stoppingToken);
+                queue.MarkProcessed();
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -25,6 +26,7 @@ public sealed class TelemetriaWorker(
             }
             catch (Exception ex)
             {
+                queue.MarkFailed();
                 logger.LogError(ex,
                     "Falha ao processar telemetria {RequestId} do ESP {Mac}.",
                     msg.RequestId,

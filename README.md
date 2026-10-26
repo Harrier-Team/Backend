@@ -185,3 +185,5 @@ HTTP e códigos de erro estão em
 - Ajuste CORS para as origens reais do painel antes de implantar o serviço.
 - Configure credenciais reais por variáveis de ambiente, User Secrets ou um
   gerenciador de segredos. Nunca inclua credenciais em arquivos versionados.
+- A capacidade da fila e o tamanho máximo do lote são configuráveis na seção
+  `Telemetria` (`QueueCapacity` e `MaxBatchSize`).
