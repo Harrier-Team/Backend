@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Hackatohm.Api.IntegrationTests/Hackatohm.Api.IntegrationTests.csproj" />
+  <Project Path="Hackatohm.Api.UnitTests/Hackatohm.Api.UnitTests.csproj" />
+  <Project Path="Hackatohm.Api/Hackatohm.Api.csproj" />
+</Solution>

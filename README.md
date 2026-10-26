@@ -154,6 +154,21 @@ Na raiz do repositório:
 dotnet build Hackatohm.Api/Hackatohm.Api.csproj
 ```
 
+Para compilar a solução completa e executar os projetos de teste:
+
+```powershell
+dotnet build Hackatohm.slnx
+dotnet test Hackatohm.slnx
+```
+
+Os projetos de teste são organizados em:
+
+- `Hackatohm.Api.UnitTests`: regras, validadores e componentes isolados;
+- `Hackatohm.Api.IntegrationTests`: persistência, endpoints e integrações.
+
+O pipeline de CI executa restore, build e testes para cada push nas branches
+principais e para cada pull request.
+
 ## Observações operacionais
 
 - A fila de telemetria é mantida em memória. Uma reinicialização do processo
