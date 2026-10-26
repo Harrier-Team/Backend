@@ -2,9 +2,18 @@
 
 ## Regras de qualidade
 
-O catálogo aceita somente `temperatura.limiar_estatico` nesta versão. Os
-parâmetros `aviso` e `critico` são números finitos entre `-55` e `125`, e
-`aviso` deve ser menor que `critico`.
+O catálogo aceita os tipos `temperatura.limiar_estatico`,
+`temperatura.gradiente_termico` e `temperatura.assimetria_escovas`.
+
+Todos usam os parâmetros `aviso` e `critico`, com `aviso` menor que `critico`.
+No limiar estático, os valores representam temperatura em °C e devem estar
+entre `-55` e `125`. No gradiente, representam a taxa de subida em °C/minuto.
+Na assimetria, representam a diferença entre escovas em °C. Gradiente e
+assimetria aceitam somente valores não negativos.
+
+O tipo é persistido em `RegrasQualidade.TipoRegra`; os parâmetros ficam em
+`RegrasQualidade.ParametrosJson`. Essa combinação diferencia a implementação
+aplicada ao registro sem exigir colunas específicas para cada tipo.
 
 As respostas usam camelCase, severidade como string e datas ISO 8601 com offset
 ou UTC explícito.

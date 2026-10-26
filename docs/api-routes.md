@@ -52,9 +52,12 @@ inclusive vazia quando não existem regras aplicáveis.
 | `PUT` | `/api/regras-qualidade/{id}` | `200` | Edita uma regra pelo UUID. |
 | `DELETE` | `/api/regras-qualidade/{id}` | `204` | Exclui uma regra e seus vínculos. |
 
-Nesta versão, o catálogo aceita `temperatura.limiar_estatico`. Os limites
-`aviso` e `critico` devem ser números finitos entre `-55` e `125`, com `aviso`
-menor que `critico`.
+O campo `tipoRegra` aceita `temperatura.limiar_estatico`,
+`temperatura.gradiente_termico` e `temperatura.assimetria_escovas`.
+Os campos `parametros.aviso` e `parametros.critico` devem ser finitos e ter
+`aviso` menor que `critico`. Eles representam, respectivamente, temperatura em
+°C, taxa de subida em °C/minuto ou diferença entre escovas em °C, conforme o
+tipo escolhido.
 
 ## Vínculos entre motores e regras
 

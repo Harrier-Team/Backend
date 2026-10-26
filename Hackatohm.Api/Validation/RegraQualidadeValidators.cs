@@ -1,5 +1,6 @@
 using FluentValidation;
 using Hackatohm.Api.DTOs;
+using Hackatohm.Domain.QualityGates.Constants;
 
 namespace Hackatohm.Api.Validation;
 
@@ -26,19 +27,33 @@ public abstract class RegraQualidadeRequestValidator<TRequest> : AbstractValidat
         RuleFor(request => request.Descricao)
             .MaximumLength(255).WithMessage("A descrição deve ter no máximo 255 caracteres.");
 
+        RuleFor(request => request.TipoRegra)
+            .Must(TiposRegraSuportados)
+            .WithMessage("O tipo de regra deve ser limiar estático, gradiente térmico ou assimetria entre escovas.");
+
         RuleFor(request => request.Parametros)
             .NotNull().WithMessage("Os parâmetros da regra são obrigatórios.")
-            .Must(ParametrosValidos)
-            .WithMessage("Os parâmetros devem ser finitos, estar entre -55 °C e 125 °C, e o aviso deve ser menor que o limite crítico.");
+            .Must((request, parametros) => ParametrosValidos(request.TipoRegra, parametros))
+            .WithMessage("Os parâmetros devem ser finitos, ter aviso menor que crítico e respeitar os limites do tipo de regra.");
     }
 
-    private static bool ParametrosValidos(ParametrosLimiarTemperaturaDto? parametros) =>
+    private static bool TiposRegraSuportados(string tipoRegra) =>
+        tipoRegra is TiposRegraTemperatura.LimiarEstatico
+            or TiposRegraTemperatura.GradienteTermico
+            or TiposRegraTemperatura.AssimetriaEscovas;
+
+    private static bool ParametrosValidos(
+        string tipoRegra,
+        ParametrosLimiarTemperaturaDto? parametros) =>
         parametros is not null &&
         double.IsFinite(parametros.Aviso) &&
         double.IsFinite(parametros.Critico) &&
-        parametros.Aviso >= -55 &&
-        parametros.Aviso <= 125 &&
-        parametros.Critico >= -55 &&
-        parametros.Critico <= 125 &&
+        (tipoRegra == TiposRegraTemperatura.LimiarEstatico
+            ? parametros.Aviso >= -55 &&
+              parametros.Aviso <= 125 &&
+              parametros.Critico >= -55 &&
+              parametros.Critico <= 125
+            : parametros.Aviso >= 0 &&
+              parametros.Critico >= 0) &&
         parametros.Aviso < parametros.Critico;
 }

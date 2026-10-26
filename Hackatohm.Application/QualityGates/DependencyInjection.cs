@@ -9,6 +9,8 @@ public static class DependencyInjection
     public static IServiceCollection AddQualityGates(this IServiceCollection services)
     {
         services.AddScoped<IQualityGateRule, LimiarTemperaturaRule>();
+        services.AddScoped<IQualityGateRule, GradienteTemperaturaRule>();
+        services.AddScoped<IQualityGateRule, AssimetriaEscovasRule>();
         services.AddScoped<IQualityGateEvaluator, QualityGateEvaluator>();
 
         return services;
