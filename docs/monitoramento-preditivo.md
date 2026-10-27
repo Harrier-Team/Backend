@@ -63,10 +63,9 @@ No gradiente, queda/estabilidade (`<= 0`) não gera alerta de subida.
 Limiar, assimetria e gradiente descrevem o estado presente ou a velocidade de
 subida. Só a previsão por tendência responde *quando* o limite será atingido: o
 tempo estimado até `temperaturaLimite` é o valor observado do resultado. Ela é
-uma extrapolação linear das últimas leituras, não um modelo de machine learning,
-e perde precisão se o comportamento térmico não for linear. Na previsão, menos
-minutos até o limite significa mais urgência; por isso `aviso` é maior que
-`critico`.
+uma extrapolação linear das últimas leituras e perde precisão se o comportamento
+térmico não for linear. Menos minutos até o limite significa mais urgência: com
+`aviso: 10` e `critico: 5`, faltar 10 min já é aviso e faltar 5 min é crítico.
 
 Exemplo de bancada: 40 para 45 °C em 30 s corresponde a 10 °C/min.
 Um lote com 40, 44 e 58 °C tem assimetria de 18 °C. Os números não são
