@@ -8,6 +8,7 @@
   - `ReceberTelemetria`
   - `ReceberLoteTelemetria`
   - `ReceberStatusMotor`
+  - `ReceberAlertaManutencao`
 
 Os dois eventos usam o mesmo objeto `TelemetriaRealtimeDto`. O evento em lote
 recebe uma coleção desses objetos; o evento individual recebe um único objeto.
@@ -206,3 +207,42 @@ contrato; será adicionado quando o histórico de transições for implementado.
 O backend não emite evento quando um ESP fica em silêncio, portanto `Offline` não
 é enviado por push. Se o cliente deixar de receber eventos do motor por um tempo
 (por exemplo, 30 s), deve consultar `GET /api/motores/{motorId}/status`.
+
+## Alerta de manutenção
+
+Quando um lote abre um alerta de manutenção ou faz a severidade de um alerta
+aberto **subir**, o backend publica `ReceberAlertaManutencao`, um evento por
+alerta, do mais grave para o menos grave, logo depois de `ReceberStatusMotor`.
+O payload é o mesmo item devolvido por `GET /api/alertas` (veja os campos em
+[api-compatibility.md](api-compatibility.md)), já com o `id` gravado:
+
+```json
+{
+  "id": 41,
+  "motorId": 3,
+  "sensorId": "AA:BB:CC:DD:EE:FF_Escova2",
+  "numeroEscova": 2,
+  "regraQualidadeId": "5f0c2b1e-8d4a-4a53-9a58-1f6f0a7c9e12",
+  "nomeRegra": "Previsão por tendência",
+  "tipoRegra": "temperatura.previsao_tendencia",
+  "categoria": "Preditivo",
+  "codigoRegra": "PREVISAO_TENDENCIA_ALERTA",
+  "severidade": "AlertaPreditivo",
+  "valorObservado": 8.4,
+  "valorLimite": 10,
+  "mensagem": "A escova 2 tende a atingir 95.0 °C em ~8 min (+2.10 °C/min).",
+  "iniciadoEm": "2026-10-27T14:30:00+00:00",
+  "atualizadoEm": "2026-10-27T14:30:00+00:00",
+  "resolvidoEm": null,
+  "ativo": true
+}
+```
+
+Não há evento para os demais casos: um alerta que continua aberto sem piorar,
+que perde gravidade ou que é encerrado não é reenviado, para o painel não
+receber um aviso a cada lote. O painel mantém a lista atual com
+`GET /api/alertas?ativo=true` e usa este evento para mostrar o aviso e inserir
+ou atualizar a linha pelo `id`. Para saber que um alerta foi encerrado, consulte
+a lista de novo. Como os demais eventos, é enviado em broadcast global: filtre
+por `motorId`. O evento só chega a quem está conectado; ao reconectar, recarregue
+a lista pela API.

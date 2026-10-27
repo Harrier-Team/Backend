@@ -194,9 +194,10 @@ quando um gate passa a disparar e é encerrado quando ele deixa de disparar. O
 ## Atualizações em tempo real
 
 O hub SignalR está disponível em `/api/telemetriaHub`. Os eventos enviados aos
-clientes são `ReceberLoteTelemetria`, `ReceberTelemetria` e
-`ReceberStatusMotor` (status agregado do motor, publicado após cada lote). Os DTOs incluem as
-leituras e os resultados das regras avaliadas. O contrato completo está em
+clientes são `ReceberLoteTelemetria`, `ReceberTelemetria`,
+`ReceberStatusMotor` (status agregado do motor, publicado após cada lote) e
+`ReceberAlertaManutencao` (alerta de manutenção novo ou que ficou mais grave).
+Os DTOs incluem as leituras e os resultados das regras avaliadas. O contrato completo está em
 [docs/signalr-contract.md](docs/signalr-contract.md).
 
 ## Migrations

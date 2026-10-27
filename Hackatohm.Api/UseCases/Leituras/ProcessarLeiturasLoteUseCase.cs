@@ -9,6 +9,7 @@ using Hackatohm.Api.Queues;
 using Hackatohm.Application.Alertas;
 using Hackatohm.Application.MotorStatus;
 using Microsoft.Extensions.Options;
+using Hackatohm.Api.UseCases.Alertas;
 using Hackatohm.Api.UseCases.Motores;
 
 namespace Hackatohm.Api.UseCases.Leituras;
@@ -140,7 +141,7 @@ public class ProcessarLeiturasLoteUseCase(
         }
 
         // Mesma transação das leituras: o histórico de alertas nunca diverge do que foi salvo.
-        await alertaManutencaoService.RegistrarAsync(
+        var alertasParaNotificar = await alertaManutencaoService.RegistrarAsync(
             motores[0],
             [.. contextosAvaliacao.Select(contexto => new AvaliacaoSensor(
                 contexto.Sensor,
@@ -193,6 +194,13 @@ public class ProcessarLeiturasLoteUseCase(
                     dataRecebimento);
                 await hubContext.Clients.All
                     .ReceberStatusMotor(MotorStatusResponseMapper.Mapear(status));
+            }
+
+            // Só alertas recém-abertos ou que escalaram: manter um alerta aberto não notifica de novo.
+            foreach (var alerta in alertasParaNotificar.OrderByDescending(alerta => alerta.Severidade))
+            {
+                await hubContext.Clients.All
+                    .ReceberAlertaManutencao(AlertaManutencaoMapper.Mapear(alerta));
             }
         }
         catch (Exception exception)

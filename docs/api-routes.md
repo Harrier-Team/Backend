@@ -119,7 +119,7 @@ Uma associação duplicada retorna `409 Conflict` com o código
 | SignalR | `/api/telemetriaHub` | Endpoint de conexão do hub SignalR. |
 
 O hub publica `ReceberLoteTelemetria` e `ReceberTelemetria`. O contrato desses
-eventos, além de `ReceberStatusMotor`, está em
+eventos, além de `ReceberStatusMotor` e `ReceberAlertaManutencao`, está em
 [signalr-contract.md](signalr-contract.md).
 
 ## Erros

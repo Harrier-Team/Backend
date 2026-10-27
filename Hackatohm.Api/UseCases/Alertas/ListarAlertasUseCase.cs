@@ -1,7 +1,6 @@
 using FluentValidation;
 using Hackatohm.Api.DTOs;
 using Hackatohm.Application.Abstractions.Persistence;
-using Hackatohm.Domain.Entities;
 using Hackatohm.Domain.QualityGates;
 
 namespace Hackatohm.Api.UseCases.Alertas;
@@ -26,7 +25,7 @@ public sealed class ListarAlertasUseCase(
             filtro, request.Pagina, request.Tamanho, cancellationToken);
 
         return new(
-            [.. pagina.Itens.Select(Mapear)],
+            [.. pagina.Itens.Select(AlertaManutencaoMapper.Mapear)],
             request.Pagina,
             request.Tamanho,
             pagina.Total);
@@ -43,24 +42,4 @@ public sealed class ListarAlertasUseCase(
             ? tiposDaCategoria
             : [.. tiposDaCategoria.Where(tipo => tipo == tipoRegra)];
     }
-
-    private static AlertaManutencaoResponseDto Mapear(AlertaManutencao alerta) =>
-        new(
-            alerta.Id,
-            alerta.MotorId,
-            alerta.SensorId,
-            alerta.NumeroEscova,
-            alerta.RegraQualidadeId,
-            alerta.NomeRegra,
-            alerta.TipoRegra,
-            CategoriaAlertaExtensions.DeTipoRegra(alerta.TipoRegra),
-            alerta.CodigoRegra,
-            alerta.Severidade,
-            alerta.ValorObservado,
-            alerta.ValorLimite,
-            alerta.Mensagem,
-            alerta.IniciadoEm,
-            alerta.AtualizadoEm,
-            alerta.ResolvidoEm,
-            alerta.Ativo);
 }
