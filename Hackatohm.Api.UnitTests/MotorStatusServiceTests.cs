@@ -21,7 +21,7 @@ public sealed class MotorStatusServiceTests
         var evaluator = CriarEvaluator();
         var service = new MotorStatusService(
             new FakeMotorRepository(motor),
-            new FakeLeituraRepository(leituras),
+            new FakeLeituraRepository(leituras, null, motor),
             evaluator);
 
         var resultado = await service.ObterAsync(
@@ -46,7 +46,7 @@ public sealed class MotorStatusServiceTests
         var leituras = CriarLeituras(motor, data, data.AddMinutes(-3));
         var service = new MotorStatusService(
             new FakeMotorRepository(motor),
-            new FakeLeituraRepository(leituras),
+            new FakeLeituraRepository(leituras, null, motor),
             CriarEvaluator());
 
         var resultado = await service.ObterAsync(
@@ -55,6 +55,85 @@ public sealed class MotorStatusServiceTests
             data);
 
         Assert.Equal(SituacaoMotor.Degradado, resultado!.Situacao);
+    }
+
+    [Fact]
+    public async Task ObterAsync_SensorSemLeituraImpedeStatusOnline()
+    {
+        var data = DateTimeOffset.UtcNow;
+        var motor = CriarMotor();
+        var leituras = CriarLeituras(motor, data, data);
+        leituras.Remove("sensor-2");
+        var service = new MotorStatusService(
+            new FakeMotorRepository(motor),
+            new FakeLeituraRepository(leituras, null, motor),
+            CriarEvaluator());
+
+        var resultado = await service.ObterAsync(motor.Id, TimeSpan.FromMinutes(2), data);
+
+        Assert.Equal(SituacaoMotor.Degradado, resultado!.Situacao);
+    }
+
+    [Fact]
+    public async Task ObterAsync_AlertaDesgasteAcompanhaGatesReavaliados()
+    {
+        var data = DateTimeOffset.UtcNow;
+        var motor = CriarMotor();
+        var leituras = CriarLeituras(motor, data, data);
+        leituras["sensor-1"].ValorCelsius = 60;
+        leituras["sensor-1"].AlertaDesgaste = true;
+        var service = new MotorStatusService(
+            new FakeMotorRepository(motor),
+            new FakeLeituraRepository(leituras, null, motor),
+            CriarEvaluator());
+
+        var resultado = await service.ObterAsync(motor.Id, TimeSpan.FromMinutes(2), data);
+
+        Assert.All(resultado!.Escovas, escova => Assert.False(escova.AlertaDesgaste));
+    }
+
+    [Fact]
+    public async Task ObterAsync_UsaLeituraAnteriorParaGradienteCritico()
+    {
+        var data = DateTimeOffset.UtcNow;
+        var motor = CriarMotor();
+        var leituras = CriarLeituras(motor, data, data);
+        leituras["sensor-1"].ValorCelsius = 50;
+        leituras["sensor-2"].ValorCelsius = 50;
+        var anterior = new LeituraTemperatura
+        {
+            SensorId = "sensor-1",
+            ValorCelsius = 30,
+            DataHora = data.AddMinutes(-1)
+        };
+        var service = new MotorStatusService(
+            new FakeMotorRepository(motor),
+            new FakeLeituraRepository(leituras, [anterior], motor),
+            CriarEvaluator(new GradienteTemperaturaRule(), "temperatura.gradiente_termico", """{"aviso":5,"critico":10}"""));
+
+        var resultado = await service.ObterAsync(motor.Id, TimeSpan.FromMinutes(2), data);
+
+        Assert.Equal(NivelSeveridade.Critico, resultado!.SeveridadeGeral);
+        Assert.Equal("GRADIENTE_TERMICO_CRITICO", resultado.Motivo!.CodigoRegra);
+    }
+
+    [Fact]
+    public async Task ObterAsync_AssimetriaIgnoraLeiturasDeOutroInstante()
+    {
+        var data = DateTimeOffset.UtcNow;
+        var motor = CriarMotor();
+        var leituras = CriarLeituras(motor, data, data.AddSeconds(-30));
+        leituras["sensor-1"].ValorCelsius = 70;
+        leituras["sensor-2"].ValorCelsius = 40;
+        var service = new MotorStatusService(
+            new FakeMotorRepository(motor),
+            new FakeLeituraRepository(leituras, null, motor),
+            CriarEvaluator(new AssimetriaEscovasRule(), "temperatura.assimetria_escovas", """{"aviso":10,"critico":20}"""));
+
+        var resultado = await service.ObterAsync(motor.Id, TimeSpan.FromMinutes(2), data);
+
+        Assert.Null(resultado!.Motivo);
+        Assert.Equal(NivelSeveridade.Normal, resultado.SeveridadeGeral);
     }
 
     private static Motor CriarMotor() =>
@@ -90,10 +169,13 @@ public sealed class MotorStatusServiceTests
             }
         };
 
-    private static QualityGateEvaluator CriarEvaluator() =>
+    private static QualityGateEvaluator CriarEvaluator(
+        IQualityGateRule? regra = null,
+        string tipo = "temperatura.limiar_estatico",
+        string parametros = """{"aviso":80,"critico":95}""") =>
         new(
-            new FakeRegraRepository(),
-            [new LimiarTemperaturaRule()],
+            new FakeRegraRepository(tipo, parametros),
+            [regra ?? new LimiarTemperaturaRule()],
             NullLogger<QualityGateEvaluator>.Instance);
 
     private sealed class FakeMotorRepository(Motor motor) : IMotorRepository
@@ -112,19 +194,50 @@ public sealed class MotorStatusServiceTests
     }
 
     private sealed class FakeLeituraRepository(
-        IReadOnlyDictionary<string, LeituraTemperatura> leituras) : ILeituraTemperaturaRepository
+        IReadOnlyDictionary<string, LeituraTemperatura> leituras,
+        IReadOnlyList<LeituraTemperatura>? historico = null,
+        Motor? motor = null) : ILeituraTemperaturaRepository
     {
+        private IEnumerable<LeituraTemperatura> Todas =>
+            (historico ?? []).Concat(leituras.Values);
+
         public Task<IReadOnlyDictionary<string, LeituraTemperatura>> ObterMaisRecentesPorSensoresAsync(
             IReadOnlyCollection<string> sensorIds,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(leituras);
+
+        public Task<LeituraTemperatura?> ObterAnteriorPorSensorAsync(
+            string sensorId,
+            DateTimeOffset instante,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Todas
+                .Where(leitura => leitura.SensorId == sensorId && leitura.DataHora < instante)
+                .OrderByDescending(leitura => leitura.DataHora)
+                .FirstOrDefault());
+
+        public Task<IReadOnlyList<LeituraTemperatura>> ObterPorMotorNoInstanteAsync(
+            int motorId,
+            DateTimeOffset instante,
+            CancellationToken cancellationToken = default)
+        {
+            var sensores = motor?.Sensores.ToDictionary(sensor => sensor.Id) ?? [];
+            var lote = Todas
+                .Where(leitura => leitura.DataHora == instante && sensores.ContainsKey(leitura.SensorId))
+                .Select(leitura =>
+                {
+                    leitura.Sensor = sensores[leitura.SensorId];
+                    return leitura;
+                })
+                .ToArray();
+            return Task.FromResult<IReadOnlyList<LeituraTemperatura>>(lote);
+        }
 
         public Task AdicionarRangeAsync(IEnumerable<LeituraTemperatura> leituras, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<LeituraTemperatura?> ObterPorIdAsync(long leituraId, CancellationToken cancellationToken = default) => Task.FromResult<LeituraTemperatura?>(null);
         public Task<LeituraTemperatura?> ObterMaisRecentePorSensorAsync(string sensorId, CancellationToken cancellationToken = default) => Task.FromResult<LeituraTemperatura?>(null);
     }
 
-    private sealed class FakeRegraRepository : IRegraQualidadeRepository
+    private sealed class FakeRegraRepository(string tipo, string parametros) : IRegraQualidadeRepository
     {
         public Task<IReadOnlyDictionary<int, IReadOnlyList<RegraQualidade>>> ObterAtivasPorMotoresAsync(
             IReadOnlyCollection<int> motorIds,
@@ -138,8 +251,8 @@ public sealed class MotorStatusServiceTests
                         {
                             Id = Guid.NewGuid(),
                             Nome = "Limiar de teste",
-                            TipoRegra = "temperatura.limiar_estatico",
-                            ParametrosJson = """{"aviso":80,"critico":95}""",
+                            TipoRegra = tipo,
+                            ParametrosJson = parametros,
                             Ativo = true
                         }
                     ]

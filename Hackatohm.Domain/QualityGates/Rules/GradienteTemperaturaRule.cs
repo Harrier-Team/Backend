@@ -27,7 +27,8 @@ public sealed class GradienteTemperaturaRule : IQualityGateRule
             contexto.IntervaloDesdeUltimaLeitura is null ||
             contexto.IntervaloDesdeUltimaLeitura <= TimeSpan.Zero)
         {
-            return ValueTask.FromResult(ResultadoGateQualidade.Normal(TipoRegra));
+            return ValueTask.FromResult(ResultadoGateQualidade.DadosInsuficientes(
+                TipoRegra, "Aguardando duas amostras com intervalo positivo para calcular o gradiente térmico."));
         }
 
         var gradiente = (contexto.LeituraAtual.Temperatura - contexto.TemperaturaAnterior.Value) /

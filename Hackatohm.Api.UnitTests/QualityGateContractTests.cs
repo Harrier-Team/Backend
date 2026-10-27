@@ -16,7 +16,8 @@ public sealed class QualityGateContractTests
     [Theory]
     [InlineData(80, 95)]
     [InlineData(-55, 125)]
-    [InlineData(80, 200)]
+    [InlineData(-55, 200)]
+    [InlineData(126, 200)]
     public void RegraValidador_AceitaLimitesFinitos(double aviso, double critico)
     {
         var validator = new CadastrarRegraQualidadeRequestDtoValidator();
@@ -29,6 +30,12 @@ public sealed class QualityGateContractTests
         var result = validator.Validate(request);
 
         Assert.True(result.IsValid);
+        var editResult = new EditarRegraQualidadeRequestDtoValidator().Validate(
+            new EditarRegraQualidadeRequestDto
+            {
+                Nome = request.Nome, Parametros = request.Parametros, TipoRegra = request.TipoRegra
+            });
+        Assert.True(editResult.IsValid);
     }
 
     [Theory]

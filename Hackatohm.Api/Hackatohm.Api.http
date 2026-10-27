@@ -1,9 +1,56 @@
 @Hackatohm.Api_HostAddress = http://localhost:5281
+@motorId = 1
+@regraId = 00000000-0000-0000-0000-000000000001
+@espMacAddress = AA:BB:CC:DD:EE:FF
 
-GET {{Hackatohm.Api_HostAddress}}/weatherforecast/
+# Exemplos de software: substitua IDs/MAC pelos valores cadastrados.
+# Limites abaixo não são parâmetros operacionais validados do equipamento.
+
+### Saúde da aplicação
+GET {{Hackatohm.Api_HostAddress}}/health/live
+
+### Saúde do banco e da fila
+GET {{Hackatohm.Api_HostAddress}}/health/ready
+
+### Listar motores
+GET {{Hackatohm.Api_HostAddress}}/api/motores
 Accept: application/json
 
-###
+### Cadastrar motor com TODAS as escovas do mesmo ESP
+POST {{Hackatohm.Api_HostAddress}}/api/motores
+Content-Type: application/json
+
+{
+  "nome": "Motor de bancada",
+  "tipo": "Anéis coletores",
+  "sensoresIniciais": [
+    { "macAddress": "{{espMacAddress}}", "numeroEscova": 1, "modelo": "MLX90614" },
+    { "macAddress": "{{espMacAddress}}", "numeroEscova": 2, "modelo": "MLX90614" }
+  ]
+}
+
+### Obter motor (atualize motorId com o ID criado)
+GET {{Hackatohm.Api_HostAddress}}/api/motores/{{motorId}}
+
+### Obter sensor
+GET {{Hackatohm.Api_HostAddress}}/api/sensores/{{espMacAddress}}_Escova1
+
+### Lote completo: exige exatamente as duas escovas acima no motor
+# 202 {"ok":true} confirma enfileiramento. O ESP segue a cadência de envio.
+POST {{Hackatohm.Api_HostAddress}}/api/leituras
+Content-Type: application/json
+
+{
+  "espMacAddress": "{{espMacAddress}}",
+  "sensores": [
+    { "numeroEscova": 1, "temperatura": 42.5 },
+    { "numeroEscova": 2, "temperatura": 44.1 }
+  ]
+}
+
+### Última leitura e gates reavaliados com histórico e lote
+GET {{Hackatohm.Api_HostAddress}}/api/leituras?espMacAddress={{espMacAddress}}&numeroEscova=1
+Accept: application/json
 
 ### Criar regra de limiar térmico
 POST {{Hackatohm.Api_HostAddress}}/api/regras-qualidade
@@ -12,10 +59,33 @@ Content-Type: application/json
 {
   "nome": "Limiar térmico padrão",
   "descricao": "Detecta temperaturas elevadas nas escovas",
+  "tipoRegra": "temperatura.limiar_estatico",
   "parametros": {
     "aviso": 80,
     "critico": 95
   },
+  "ativo": true
+}
+
+### Criar regra de gradiente (limites em °C/minuto)
+POST {{Hackatohm.Api_HostAddress}}/api/regras-qualidade
+Content-Type: application/json
+
+{
+  "nome": "Subida rápida de temperatura",
+  "tipoRegra": "temperatura.gradiente_termico",
+  "parametros": { "aviso": 4, "critico": 8 },
+  "ativo": true
+}
+
+### Criar regra de assimetria (limites de diferença em °C)
+POST {{Hackatohm.Api_HostAddress}}/api/regras-qualidade
+Content-Type: application/json
+
+{
+  "nome": "Diferença entre escovas",
+  "tipoRegra": "temperatura.assimetria_escovas",
+  "parametros": { "aviso": 10, "critico": 20 },
   "ativo": true
 }
 
@@ -24,16 +94,17 @@ GET {{Hackatohm.Api_HostAddress}}/api/regras-qualidade
 Accept: application/json
 
 ### Obter regra de qualidade (substituir pelo Guid criado)
-GET {{Hackatohm.Api_HostAddress}}/api/regras-qualidade/00000000-0000-0000-0000-000000000001
+GET {{Hackatohm.Api_HostAddress}}/api/regras-qualidade/{{regraId}}
 Accept: application/json
 
 ### Editar regra de qualidade
-PUT {{Hackatohm.Api_HostAddress}}/api/regras-qualidade/00000000-0000-0000-0000-000000000001
+PUT {{Hackatohm.Api_HostAddress}}/api/regras-qualidade/{{regraId}}
 Content-Type: application/json
 
 {
   "nome": "Limiar térmico revisado",
   "descricao": "Parâmetros atualizados para o equipamento",
+  "tipoRegra": "temperatura.limiar_estatico",
   "parametros": {
     "aviso": 82,
     "critico": 98
@@ -42,7 +113,7 @@ Content-Type: application/json
 }
 
 ### Associar regra ao motor
-POST {{Hackatohm.Api_HostAddress}}/api/motores/1/regras-qualidade/00000000-0000-0000-0000-000000000001
+POST {{Hackatohm.Api_HostAddress}}/api/motores/{{motorId}}/regras-qualidade/{{regraId}}
 Content-Type: application/json
 
 {
@@ -50,15 +121,15 @@ Content-Type: application/json
 }
 
 ### Listar regras associadas ao motor
-GET {{Hackatohm.Api_HostAddress}}/api/motores/1/regras-qualidade
+GET {{Hackatohm.Api_HostAddress}}/api/motores/{{motorId}}/regras-qualidade
 Accept: application/json
 
 ### Obter vínculo de regra e motor
-GET {{Hackatohm.Api_HostAddress}}/api/motores/1/regras-qualidade/00000000-0000-0000-0000-000000000001
+GET {{Hackatohm.Api_HostAddress}}/api/motores/{{motorId}}/regras-qualidade/{{regraId}}
 Accept: application/json
 
 ### Ativar ou desativar vínculo
-PUT {{Hackatohm.Api_HostAddress}}/api/motores/1/regras-qualidade/00000000-0000-0000-0000-000000000001
+PUT {{Hackatohm.Api_HostAddress}}/api/motores/{{motorId}}/regras-qualidade/{{regraId}}
 Content-Type: application/json
 
 {
@@ -66,7 +137,7 @@ Content-Type: application/json
 }
 
 ### Remover vínculo sem excluir a regra do catálogo
-DELETE {{Hackatohm.Api_HostAddress}}/api/motores/1/regras-qualidade/00000000-0000-0000-0000-000000000001
+DELETE {{Hackatohm.Api_HostAddress}}/api/motores/{{motorId}}/regras-qualidade/{{regraId}}
 
 ### Excluir regra e todos os seus vínculos
-DELETE {{Hackatohm.Api_HostAddress}}/api/regras-qualidade/00000000-0000-0000-0000-000000000001
+DELETE {{Hackatohm.Api_HostAddress}}/api/regras-qualidade/{{regraId}}

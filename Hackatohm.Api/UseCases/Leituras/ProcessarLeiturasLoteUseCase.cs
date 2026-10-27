@@ -14,7 +14,8 @@ namespace Hackatohm.Api.UseCases.Leituras;
 public enum StatusProcessamentoLote
 {
     Sucesso,
-    SensoresNaoCadastrados
+    SensoresNaoCadastrados,
+    LoteInvalido
 }
 
 public record ProcessarLeiturasLoteResult(
@@ -73,6 +74,16 @@ public class ProcessarLeiturasLoteUseCase(
                 string.Join(", ", sensoresAusentes));
             return ProcessarLeiturasLoteResult.CriarSensoresNaoCadastrados(sensoresAusentes);
         }
+
+        var motores = sensoresPorId.Values.Select(sensor => sensor.MotorId).Distinct().ToArray();
+        if (motores.Length != 1)
+            return RejeitarLote("O lote deve conter sensores de um único motor.");
+
+        var sensoresDoMotor = await sensorRepository.ObterPorMotorAsync(motores[0], cancellationToken);
+        var idsEsperados = sensoresDoMotor.Select(sensor => sensor.Id)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (!idsEsperados.SetEquals(idsSensores))
+            return RejeitarLote("O ESP deve enviar todos os sensores cadastrados do motor no mesmo lote.");
 
         var ultimasLeituras = await leituraTemperaturaRepository.ObterMaisRecentesPorSensoresAsync(
             idsSensores,
@@ -179,6 +190,12 @@ public class ProcessarLeiturasLoteUseCase(
             sensoresProcessados: leiturasParaSalvar.Count,
             alertaDetectado: leiturasParaSalvar.Any(leitura => leitura.AlertaDesgaste)
         );
+
+        ProcessarLeiturasLoteResult RejeitarLote(string motivo)
+        {
+            logger.LogWarning("Telemetria {RequestId} descartada: {Motivo}", telemetria.RequestId, motivo);
+            return new(StatusProcessamentoLote.LoteInvalido, motivo);
+        }
     }
 
 }

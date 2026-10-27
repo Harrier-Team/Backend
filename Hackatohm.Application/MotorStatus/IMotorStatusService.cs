@@ -6,7 +6,8 @@ public interface IMotorStatusService
         int motorId,
         IReadOnlyList<MotorStatusReading> leituras,
         TimeSpan offlineAfter,
-        DateTimeOffset agora);
+        DateTimeOffset agora,
+        int? totalSensores = null);
 
     Task<MotorStatusResult?> ObterAsync(
         int motorId,

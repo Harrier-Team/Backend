@@ -11,6 +11,14 @@ public interface ILeituraTemperaturaRepository
     Task<LeituraTemperatura?> ObterMaisRecentePorSensorAsync(
         string sensorId,
         CancellationToken cancellationToken = default);
+    Task<LeituraTemperatura?> ObterAnteriorPorSensorAsync(
+        string sensorId,
+        DateTimeOffset instante,
+        CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<LeituraTemperatura>> ObterPorMotorNoInstanteAsync(
+        int motorId,
+        DateTimeOffset instante,
+        CancellationToken cancellationToken = default);
     Task<IReadOnlyDictionary<string, LeituraTemperatura>> ObterMaisRecentesPorSensoresAsync(
         IReadOnlyCollection<string> sensorIds,
         CancellationToken cancellationToken = default);

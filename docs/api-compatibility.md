@@ -7,7 +7,7 @@ O catálogo aceita os tipos `temperatura.limiar_estatico`,
 
 Todos usam os parâmetros `aviso` e `critico`, com `aviso` menor que `critico`.
 No limiar estático, os valores representam temperatura em °C e devem estar
-entre `-55` e `125`. No gradiente, representam a taxa de subida em °C/minuto.
+entre `-55` e `200`. No gradiente, representam a taxa de subida em °C/minuto.
 Na assimetria, representam a diferença entre escovas em °C. Gradiente e
 assimetria aceitam somente valores não negativos.
 
@@ -16,7 +16,13 @@ O tipo é persistido em `RegrasQualidade.TipoRegra`; os parâmetros ficam em
 aplicada ao registro sem exigir colunas específicas para cada tipo.
 
 As respostas usam camelCase, severidade como string e datas ISO 8601 com offset
-ou UTC explícito.
+ou UTC explícito, tanto em HTTP quanto no protocolo JSON do SignalR.
+
+No cadastro, omitir `tipoRegra` seleciona o limiar estático por compatibilidade.
+Na edição (`PUT`), envie o objeto completo com `tipoRegra`, `parametros` e
+`ativo`: omitir o tipo também seleciona o estático, não preserva implicitamente
+o tipo anterior. Os nomes dos tipos e dos parâmetros estão no
+[guia de monitoramento](monitoramento-preditivo.md).
 
 ## Vínculos
 
@@ -48,9 +54,19 @@ O tamanho máximo do lote e a capacidade da fila são configurações explícita
 do serviço. Lotes acima de `Telemetria:MaxBatchSize` são rejeitados como payload
 inválido. Quando a fila está cheia, a API responde `503` com `Retry-After`.
 
-Ainda não há idempotência persistente: o protocolo atual não fornece uma chave
-de mensagem do dispositivo. Antes de ativá-la, o dispositivo e a API devem
-concordar sobre uma chave estável, sua retenção e o comportamento para reenvios.
+Cada lote deve conter **todos os sensores cadastrados de um único motor**,
+identificados por `espMacAddress` e `numeroEscova`. O ESP envia o conjunto
+completo em uma requisição; não envie uma requisição por escova. O número da
+escova deve ser positivo e único no lote. Temperaturas devem ser finitas,
+entre -55 e 200 °C, inclusive. Horário e IP são atribuídos no recebimento HTTP.
+
+`202 {"ok":true}` significa validação do payload e entrada na fila. A
+verificação contra o cadastro acontece depois: sensores desconhecidos, mistura
+de motores ou ausência de alguma escova descartam o lote inteiro, com registro
+no log e contador de falhas. Não há resposta posterior nem confirmação de
+persistência ao dispositivo. O ESP apenas coleta e transmite; o backend
+avalia os alertas. Perda de amostras em falhas/reinícios é uma limitação aceita
+da demonstração; não há fila durável ou idempotência persistente.
 
 ## Última leitura
 
@@ -58,6 +74,27 @@ concordar sobre uma chave estável, sua retenção e o comportamento para reenvi
 `resultadosQualityGates`. Os gates são reavaliados no momento da consulta com
 as regras atualmente ativas e vinculadas ao motor; os resultados históricos
 dos gates não são persistidos nesta versão.
+
+O gradiente usa a última leitura **anterior** ao instante da amostra consultada;
+a assimetria usa as leituras do mesmo motor com o **mesmo timestamp** dessa
+amostra, compartilhado pelas leituras de cada lote. Não são misturadas as
+últimas leituras independentes de escovas em instantes diferentes. Não há
+nova coluna de lote nem migration para essa reconstrução.
+
+`alertaDesgaste` na resposta é calculado a partir dos resultados reavaliados.
+Editar regras pode mudar o diagnóstico da mesma temperatura; não altera a
+temperatura, o timestamp ou a flag histórica gravada na ingestão.
+
+Quando faltam amostras para calcular uma regra, seu resultado usa
+`codigoRegra: "DADOS_INSUFICIENTES"`, mensagem explicativa e
+`metadados.avaliacaoConcluida: false`. Por compatibilidade, `severidade` é
+`Normal` e `disparouAlerta` é `false`: isso significa ausência de violação
+calculada, não confirmação de condição saudável. O frontend deve mostrar
+"Aguardando amostras" nesse caso. Lista vazia indica ausência de regras ativas
+aplicáveis e deve ser exibida como "Sem regras".
+
+O GET retorna 404 quando não há sensor ou leitura correspondente. Não existe
+consulta de histórico por período nesta entrega.
 
 ## Status agregado do motor
 

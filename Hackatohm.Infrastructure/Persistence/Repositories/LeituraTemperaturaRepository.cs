@@ -30,8 +30,30 @@ public sealed class LeituraTemperaturaRepository(AppDbContext context) : ILeitur
             .AsNoTracking()
             .Where(leitura => leitura.SensorId == sensorId)
             .OrderByDescending(leitura => leitura.DataHora)
+            .ThenByDescending(leitura => leitura.Id)
             .FirstOrDefaultAsync(cancellationToken);
     }
+
+    public Task<LeituraTemperatura?> ObterAnteriorPorSensorAsync(
+        string sensorId,
+        DateTimeOffset instante,
+        CancellationToken cancellationToken = default) =>
+        context.LeiturasTemperatura
+            .AsNoTracking()
+            .Where(leitura => leitura.SensorId == sensorId && leitura.DataHora < instante)
+            .OrderByDescending(leitura => leitura.DataHora)
+            .ThenByDescending(leitura => leitura.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<LeituraTemperatura>> ObterPorMotorNoInstanteAsync(
+        int motorId,
+        DateTimeOffset instante,
+        CancellationToken cancellationToken = default) =>
+        await context.LeiturasTemperatura
+            .AsNoTracking()
+            .Include(leitura => leitura.Sensor)
+            .Where(leitura => leitura.Sensor.MotorId == motorId && leitura.DataHora == instante)
+            .ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyDictionary<string, LeituraTemperatura>> ObterMaisRecentesPorSensoresAsync(
         IReadOnlyCollection<string> sensorIds,

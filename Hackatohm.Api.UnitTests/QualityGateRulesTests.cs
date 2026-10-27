@@ -8,6 +8,18 @@ namespace Hackatohm.Api.UnitTests;
 public sealed class QualityGateRulesTests
 {
     [Fact]
+    public async Task GradienteTemperaturaRule_InformaDadosInsuficientesNaPrimeiraAmostra()
+    {
+        var resultado = await new GradienteTemperaturaRule().AvaliarAsync(
+            CriarContexto(temperatura: 70), """{"aviso":4,"critico":8}""");
+
+        Assert.False(resultado.DisparouAlerta);
+        Assert.Equal("DADOS_INSUFICIENTES", resultado.CodigoRegra);
+        Assert.NotNull(resultado.Metadados);
+        Assert.Equal(false, resultado.Metadados["avaliacaoConcluida"]);
+    }
+
+    [Fact]
     public async Task GradienteTemperaturaRule_DisparaAlertaComTaxaDeSubida()
     {
         var contexto = CriarContexto(
@@ -61,13 +73,15 @@ public sealed class QualityGateRulesTests
     }
 
     [Fact]
-    public async Task AssimetriaEscovasRule_RetornaNormalSemComparacao()
+    public async Task AssimetriaEscovasRule_InformaDadosInsuficientesSemComparacao()
     {
         var resultado = await new AssimetriaEscovasRule().AvaliarAsync(
             CriarContexto(temperatura: 70, leiturasIrmas: null),
             """{"aviso":10,"critico":20}""");
 
         Assert.Equal(NivelSeveridade.Normal, resultado.Severidade);
+        Assert.Equal("DADOS_INSUFICIENTES", resultado.CodigoRegra);
+        Assert.False(resultado.DisparouAlerta);
     }
 
     private static ContextoAvaliacao CriarContexto(

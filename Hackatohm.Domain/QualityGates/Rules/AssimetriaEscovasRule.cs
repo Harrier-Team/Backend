@@ -28,7 +28,8 @@ public sealed class AssimetriaEscovasRule : IQualityGateRule
             .ToArray() ?? [];
 
         if (leituras.Length < 2)
-            return ValueTask.FromResult(ResultadoGateQualidade.Normal(TipoRegra));
+            return ValueTask.FromResult(ResultadoGateQualidade.DadosInsuficientes(
+                TipoRegra, "São necessárias pelo menos duas escovas no mesmo lote para calcular a assimetria."));
 
         var temperaturaMinima = leituras.Min(leitura => leitura.Temperatura);
         var temperaturaMaxima = leituras.Max(leitura => leitura.Temperatura);

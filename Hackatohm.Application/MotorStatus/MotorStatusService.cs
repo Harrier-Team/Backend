@@ -26,29 +26,31 @@ public sealed class MotorStatusService(
             sensores.Select(sensor => sensor.Id).ToArray(),
             cancellationToken);
 
-        var contextos = sensores
-            .Where(sensor => leituras.ContainsKey(sensor.Id))
-            .Select(sensor =>
-            {
-                var leitura = leituras[sensor.Id];
-                return new ContextoAvaliacao(
-                    sensor,
-                    new LeituraTelemetriaDto
-                    {
-                        NumeroEscova = sensor.NumeroEscova,
-                        Temperatura = leitura.ValorCelsius
-                    },
-                    leitura.DataHora,
-                    sensores
-                        .Where(irma => leituras.ContainsKey(irma.Id))
-                        .Select(irma => new LeituraTelemetriaDto
-                        {
-                            NumeroEscova = irma.NumeroEscova,
-                            Temperatura = leituras[irma.Id].ValorCelsius
-                        })
-                        .ToArray());
-            })
-            .ToArray();
+        var contextos = new List<ContextoAvaliacao>();
+        foreach (var sensor in sensores.Where(sensor => leituras.ContainsKey(sensor.Id)))
+        {
+            var leitura = leituras[sensor.Id];
+            var anterior = await leituraRepository.ObterAnteriorPorSensorAsync(
+                sensor.Id, leitura.DataHora, cancellationToken);
+            var lote = await leituraRepository.ObterPorMotorNoInstanteAsync(
+                motorId, leitura.DataHora, cancellationToken);
+
+            contextos.Add(new ContextoAvaliacao(
+                sensor,
+                new LeituraTelemetriaDto
+                {
+                    NumeroEscova = sensor.NumeroEscova,
+                    Temperatura = leitura.ValorCelsius
+                },
+                leitura.DataHora,
+                lote.Select(item => new LeituraTelemetriaDto
+                {
+                    NumeroEscova = item.Sensor.NumeroEscova,
+                    Temperatura = item.ValorCelsius
+                }).ToArray(),
+                anterior?.ValorCelsius,
+                anterior is null ? null : leitura.DataHora - anterior.DataHora));
+        }
 
         var gates = await qualityGateEvaluator.AvaliarLoteAsync(contextos, cancellationToken);
         var leiturasStatus = contextos
@@ -57,18 +59,19 @@ public sealed class MotorStatusService(
                 contexto.Sensor.NumeroEscova,
                 leituras[contexto.Sensor.Id].ValorCelsius,
                 leituras[contexto.Sensor.Id].DataHora,
-                leituras[contexto.Sensor.Id].AlertaDesgaste,
+                gates[contexto.Sensor.Id].Any(gate => gate.DisparouAlerta),
                 gates[contexto.Sensor.Id]))
             .ToArray();
 
-        return Agregar(motorId, leiturasStatus, offlineAfter, agora);
+        return Agregar(motorId, leiturasStatus, offlineAfter, agora, sensores.Length);
     }
 
     public MotorStatusResult Agregar(
         int motorId,
         IReadOnlyList<MotorStatusReading> leituras,
         TimeSpan offlineAfter,
-        DateTimeOffset agora)
+        DateTimeOffset agora,
+        int? totalSensores = null)
     {
         ArgumentNullException.ThrowIfNull(leituras);
         if (offlineAfter <= TimeSpan.Zero)
@@ -83,9 +86,10 @@ public sealed class MotorStatusService(
             : escovas.Max(escova => escova.Severidade);
         var leiturasRecentes = escovas.Count(escova =>
             agora - escova.DataHora <= offlineAfter);
+        var esperadas = Math.Max(totalSensores ?? escovas.Length, escovas.Length);
         var situacao = escovas.Length == 0 || leiturasRecentes == 0
             ? SituacaoMotor.Offline
-            : leiturasRecentes == escovas.Length
+            : leiturasRecentes == esperadas
                 ? SituacaoMotor.Online
                 : SituacaoMotor.Degradado;
 
