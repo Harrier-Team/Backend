@@ -22,7 +22,9 @@ public sealed class ReceberTelemetriaUseCase(
         string requestId,
         CancellationToken cancellationToken = default)
     {
-        var dataRecebimento = DateTimeOffset.UtcNow;
+        // PostgreSQL armazena microssegundos; usa a mesma precisão antes de avaliar os gates.
+        var agora = DateTimeOffset.UtcNow;
+        var dataRecebimento = new DateTimeOffset(agora.Ticks - agora.Ticks % 10, TimeSpan.Zero);
         await validator.ValidateAndThrowAsync(payload, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 

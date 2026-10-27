@@ -19,6 +19,13 @@ public class SensorRepository(AppDbContext context) : ISensorRepository
     public Task<bool> ExisteAsync(string sensorId, CancellationToken cancellationToken = default) =>
         context.Sensores.AnyAsync(sensor => sensor.Id == sensorId, cancellationToken);
 
+    public async Task<IReadOnlyList<Sensor>> ObterPorMotorAsync(
+        int motorId,
+        CancellationToken cancellationToken = default) =>
+        await context.Sensores
+            .Where(sensor => sensor.MotorId == motorId)
+            .ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyDictionary<string, Sensor>> ObterPorIdsComoDicionarioAsync(
         IReadOnlyCollection<string> sensorIds,
         CancellationToken cancellationToken = default)

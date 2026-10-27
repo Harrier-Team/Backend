@@ -31,12 +31,7 @@ builder.Services.AddCors(options =>
 });
 
 // Registra o serviço do SignalR
-builder.Services.AddSignalR(options =>
-{
-    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
-    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
-    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
-});
+builder.Services.AddTelemetriaSignalR(builder.Environment.IsDevelopment());
 
 builder.Services
     .AddOptions<TelemetriaOptions>()

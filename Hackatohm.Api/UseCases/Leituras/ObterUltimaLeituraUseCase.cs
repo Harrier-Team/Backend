@@ -29,6 +29,11 @@ public sealed class ObterUltimaLeituraUseCase(
         if (leitura is null)
             return null;
 
+        var leituraAnterior = await leituraTemperaturaRepository.ObterAnteriorPorSensorAsync(
+            sensorId, leitura.DataHora, cancellationToken);
+        var lote = await leituraTemperaturaRepository.ObterPorMotorNoInstanteAsync(
+            sensor.MotorId, leitura.DataHora, cancellationToken);
+
         var contexto = new ContextoAvaliacao(
             sensor,
             new LeituraTelemetriaDto
@@ -36,7 +41,14 @@ public sealed class ObterUltimaLeituraUseCase(
                 NumeroEscova = sensor.NumeroEscova,
                 Temperatura = leitura.ValorCelsius
             },
-            leitura.DataHora);
+            leitura.DataHora,
+            lote.Select(item => new LeituraTelemetriaDto
+            {
+                NumeroEscova = item.Sensor.NumeroEscova,
+                Temperatura = item.ValorCelsius
+            }).ToArray(),
+            leituraAnterior?.ValorCelsius,
+            leituraAnterior is null ? null : leitura.DataHora - leituraAnterior.DataHora);
         var resultados = await qualityGateEvaluator.AvaliarAsync(
             contexto,
             cancellationToken);
@@ -45,7 +57,7 @@ public sealed class ObterUltimaLeituraUseCase(
             leitura.SensorId,
             leitura.ValorCelsius,
             leitura.DataHora,
-            leitura.AlertaDesgaste,
+            resultados.Any(resultado => resultado.DisparouAlerta),
             sensor.MotorId,
             TelemetriaRealtimeMapper.MapearResultados(resultados));
     }

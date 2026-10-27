@@ -17,8 +17,11 @@ public sealed class TelemetriaWorker(
                 using var scope = scopeFactory.CreateScope();
                 var useCase = scope.ServiceProvider
                     .GetRequiredService<ProcessarLeiturasLoteUseCase>();
-                await useCase.ProcessarAsync(msg, stoppingToken);
-                queue.MarkProcessed();
+                var resultado = await useCase.ProcessarAsync(msg, stoppingToken);
+                if (resultado.Status == StatusProcessamentoLote.Sucesso)
+                    queue.MarkProcessed();
+                else
+                    queue.MarkFailed();
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

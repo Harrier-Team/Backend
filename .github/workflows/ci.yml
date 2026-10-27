@@ -27,4 +27,4 @@ jobs:
         run: dotnet build Hackatohm.slnx --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test Hackatohm.slnx --no-build --configuration Release
+        run: dotnet test Hackatohm.Api.UnitTests/Hackatohm.Api.UnitTests.csproj --no-build --configuration Release

@@ -63,6 +63,11 @@ public sealed record ResultadoGateQualidade
             null);
     }
 
+    /// <summary>Indica que ainda faltam amostras, sem declarar uma violação térmica.</summary>
+    public static ResultadoGateQualidade DadosInsuficientes(string tipoRegra, string mensagem) =>
+        new(false, NivelSeveridade.Normal, tipoRegra, "DADOS_INSUFICIENTES", mensagem,
+            null, null, new Dictionary<string, object> { ["avaliacaoConcluida"] = false });
+
     /// <summary>
     /// Cria um resultado que exige atenção, mas ainda não configura alerta preditivo.
     /// </summary>

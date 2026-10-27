@@ -42,6 +42,22 @@ A resposta do `GET /api/leituras` inclui `motorId` e
 persistida e as regras atualmente ativas do motor. A lista sempre é retornada,
 inclusive vazia quando não existem regras aplicáveis.
 
+Envie `espMacAddress` e `numeroEscova` na query do GET. Exemplo:
+`GET /api/leituras?espMacAddress=AA%3ABB%3ACC%3ADD%3AEE%3AFF&numeroEscova=1`.
+Ausência de sensor/leitura retorna 404.
+
+O POST recebe `espMacAddress` e `sensores: [{numeroEscova, temperatura}]`.
+O ESP deve enviar todos os sensores cadastrados de um único motor no mesmo
+lote. Sensor desconhecido, lote incompleto ou mistura de motores são
+descartados pelo worker após o 202, com log. O ESP não espera confirmação da
+gravação. Consulte os exemplos completos em
+[`Hackatohm.Api.http`](../Hackatohm.Api/Hackatohm.Api.http).
+
+A reavaliação no GET reconstrói o gradiente com a leitura anterior e a
+assimetria com o lote persistido do mesmo motor/timestamp. O booleano
+`alertaDesgaste` da resposta é recalculado junto dos gates. Detalhes e casos
+sem amostras suficientes estão em [api-compatibility.md](api-compatibility.md).
+
 ## Catálogo de Quality Gates
 
 | Método | Rota | Sucesso | Descrição |
@@ -58,6 +74,10 @@ Os campos `parametros.aviso` e `parametros.critico` devem ser finitos e ter
 `aviso` menor que `critico`. Eles representam, respectivamente, temperatura em
 °C, taxa de subida em °C/minuto ou diferença entre escovas em °C, conforme o
 tipo escolhido.
+
+No tipo estático, ambos os limites ficam entre -55 e 200 °C. Nos demais,
+ambos são não negativos. Comparações usam `>=`: igualdade ao limite já aciona
+o respectivo nível. O aviso gera `AlertaPreditivo` e o crítico gera `Critico`.
 
 ## Vínculos entre motores e regras
 

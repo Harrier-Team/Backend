@@ -21,6 +21,9 @@ dos gates ainda não fazem parte do escopo implementado.
 - Docker Desktop com Docker Compose
 - `dotnet-ef` 10 para criar ou aplicar migrations
 
+As referências EF Core usadas pela API e infraestrutura estão alinhadas em
+10.0.14, com provider Npgsql 10.0.3, para evitar conflitos de versões nos testes.
+
 ## Configuração local
 
 Na raiz deste repositório, crie o arquivo `.env` a partir do exemplo:
@@ -53,9 +56,7 @@ dotnet tool update --global dotnet-ef --version 10.0.14
 Crie ou atualize o schema do banco:
 
 ```powershell
-dotnet ef database update `
-  --project Hackatohm.Infrastructure/Hackatohm.Infrastructure.csproj `
-  --startup-project Hackatohm.Api/Hackatohm.Api.csproj
+dotnet ef database update --project Hackatohm.Infrastructure/Hackatohm.Infrastructure.csproj --startup-project Hackatohm.Api/Hackatohm.Api.csproj
 ```
 
 Execute a API:
@@ -77,6 +78,13 @@ O perfil HTTP de desenvolvimento disponibiliza a API em
 - Consulta da leitura mais recente de um sensor.
 - Publicação de telemetria e resultados dos gates via SignalR.
 - Health checks, métricas básicas e documentação OpenAPI em desenvolvimento.
+
+O contrato da demonstração é **um ESP enviando todos os sensores de um motor
+no mesmo lote**. O dispositivo coleta e transmite; as decisões de alerta ficam
+no backend. O objetivo da Hackatohm é demonstrar comunicação, amostragem no
+painel e diagnóstico por regras térmicas. Consulte o guia de
+[manutenção preditiva e amostragem](docs/monitoramento-preditivo.md) para as
+fórmulas, a integração do frontend e os limites da demonstração.
 
 O envio SignalR permanece em broadcast global por simplicidade e prazo da
 Hackatohm. O frontend deve filtrar os eventos recebidos pelo identificador do
@@ -142,9 +150,23 @@ desenvolvimento também pode ser consultado em
 | `DELETE` | `/api/motores/{motorId}/regras-qualidade/{regraId}` | Remove um vínculo |
 
 O POST de telemetria retorna `202 Accepted` quando o lote entra na fila.
-Validação, avaliação dos Quality Gates, persistência e publicação SignalR
-ocorrem depois, no worker. O catálogo aceita atualmente a estratégia
-`temperatura.limiar_estatico`.
+A validação do payload ocorre antes do enfileiramento. O worker confere se
+todos os sensores estão cadastrados, pertencem a um único motor e formam o
+conjunto completo desse motor; depois avalia os Quality Gates, persiste e
+publica via SignalR. Lotes incompatíveis com o cadastro são descartados com
+registro no log. O ESP não precisa esperar confirmação de persistência.
+
+O catálogo aceita `temperatura.limiar_estatico`,
+`temperatura.gradiente_termico` e `temperatura.assimetria_escovas`.
+Telemetria e limites de regras estáticas aceitam **-55 a 200 °C**, inclusive.
+Gradiente usa °C/minuto e assimetria usa diferença em °C; seus limites são
+finitos e não negativos. Todos exigem `aviso < critico`.
+
+O GET da última leitura reconstrói o contexto com a amostra anterior do
+sensor e as leituras do motor no mesmo instante do lote, reavaliando as regras
+atualmente ativas. Assim, gradiente e assimetria também são calculados na
+recarga do painel. O booleano `alertaDesgaste` da resposta acompanha essa
+reavaliação; a flag armazenada no histórico permanece como foi na ingestão.
 
 ## Atualizações em tempo real
 
@@ -180,13 +202,15 @@ Na raiz do repositório:
 
 ```powershell
 dotnet build Hackatohm.slnx
-dotnet test Hackatohm.slnx
+dotnet test Hackatohm.Api.UnitTests/Hackatohm.Api.UnitTests.csproj
 ```
 
-Os projetos de teste são organizados em:
+`Hackatohm.Api.UnitTests` cobre regras, validadores, reconstrução do contexto
+na consulta, lotes completos de um motor e o protocolo JSON registrado para o
+SignalR. Os testes usam dados isolados em memória.
 
-- `Hackatohm.Api.UnitTests`: regras, validadores e componentes isolados;
-- `Hackatohm.Api.IntegrationTests`: persistência, endpoints e integrações.
+`Hackatohm.Api.IntegrationTests` é uma estrutura antiga sem testes
+implementados. Testes de integração não fazem parte do escopo da Hackatohm.
 
 O pipeline de CI executa restore, build e testes para cada push nas branches
 principais e para cada pull request.
@@ -198,6 +222,8 @@ principais e para cada pull request.
 - `GET /health/ready`: verifica a conexão com o PostgreSQL e o estado da fila.
 - As métricas `hackatohm.telemetria.*` registram aceitas, rejeitadas,
   processadas e falhas através de `System.Diagnostics.Metrics`.
+- `processadas` conta lotes salvos; descartes por cadastro/lote inválido e
+  exceções entram em `falhas`. São contadores locais, sem confirmação ao ESP.
 
 ## Contratos versionados
 
@@ -217,3 +243,8 @@ HTTP e códigos de erro estão em
   gerenciador de segredos. Nunca inclua credenciais em arquivos versionados.
 - A capacidade da fila e o tamanho máximo do lote são configuráveis na seção
   `Telemetria` (`QueueCapacity` e `MaxBatchSize`).
+- Confirmação durável ao ESP, fila persistente, reenvio histórico, machine
+  learning e um serviço separado de consolidação do motor ficam fora desta
+  entrega. O painel pode resumir os resultados atuais pela maior severidade.
+- Não há endpoint de histórico paginado nesta versão: o frontend forma a
+  janela do gráfico com os eventos recebidos durante a sessão.
