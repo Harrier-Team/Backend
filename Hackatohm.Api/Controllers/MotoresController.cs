@@ -2,6 +2,7 @@ using Hackatohm.Api.DTOs;
 using Hackatohm.Api.Errors;
 using Hackatohm.Api.UseCases.Motores;
 using Hackatohm.Api.UseCases.Sensores;
+using Hackatohm.Api.DTOs.MotorStatus;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hackatohm.Api.Controllers;
@@ -11,6 +12,7 @@ namespace Hackatohm.Api.Controllers;
 public sealed class MotoresController(
     CadastrarMotorUseCase cadastrarMotorUseCase,
     ObterMotorUseCase obterMotorUseCase,
+    ObterStatusMotorUseCase obterStatusMotorUseCase,
     ListarMotoresUseCase listarMotoresUseCase,
     DeletarMotorUseCase deletarMotorUseCase,
     PingSensorUseCase pingSensorUseCase) : ControllerBase
@@ -58,6 +60,19 @@ public sealed class MotoresController(
     {
         var motores = await listarMotoresUseCase.ExecutarAsync(cancellationToken);
         return Ok(motores);
+    }
+
+    [HttpGet("{id:int}/status")]
+    [ProducesResponseType(typeof(MotorStatusResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<MotorStatusResponseDto>> ObterStatus(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var status = await obterStatusMotorUseCase.ExecutarAsync(id, cancellationToken);
+        return status is null
+            ? ApiErrorResponseFactory.ToProblemResult(HttpContext, ApiErrorCatalog.MotorNotFound)
+            : Ok(status);
     }
 
     [HttpDelete("{id:int}")]

@@ -95,3 +95,23 @@ aplicáveis e deve ser exibida como "Sem regras".
 
 O GET retorna 404 quando não há sensor ou leitura correspondente. Não existe
 consulta de histórico por período nesta entrega.
+
+## Status agregado do motor
+
+`GET /api/motores/{motorId}/status` retorna a situação consolidada do motor,
+incluindo a maior severidade entre as escovas, a contagem por severidade, o
+principal motivo e a última leitura de cada escova.
+
+`situacao` é calculada pelo frescor das leituras:
+
+- `Online`: todas as escovas possuem leitura dentro de
+  `Telemetria:OfflineAfterSeconds`;
+- `Degradado`: apenas parte das escovas possui leitura recente;
+- `Offline`: o motor não possui leitura recente ou ainda não possui leituras.
+
+O campo `desde` não faz parte deste primeiro contrato. Os enums
+`severidadeGeral`, `escovas[].severidade` e `situacao` são serializados como
+strings.
+
+Cada lote de telemetria contém todas as escovas do motor. O status agregado
+publicado após a ingestão representa o conjunto completo recebido naquele lote.

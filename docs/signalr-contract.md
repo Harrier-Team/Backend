@@ -7,6 +7,7 @@
 - Eventos enviados pelo servidor:
   - `ReceberTelemetria`
   - `ReceberLoteTelemetria`
+  - `ReceberStatusMotor`
 
 Os dois eventos usam o mesmo objeto `TelemetriaRealtimeDto`. O evento em lote
 recebe uma coleção desses objetos; o evento individual recebe um único objeto.
@@ -89,3 +90,29 @@ não de medição do ESP. Mais orientações em
 Clientes antigos que ignoram `resultadosQualityGates` continuam compatíveis.
 Clientes novos devem tratar a propriedade como uma lista sempre presente. Não
 há um segundo hub ou evento específico para Quality Gates.
+
+## Status agregado do motor
+
+Ao chamar `AssinarMotor(motorId)`, o cliente entra no grupo do motor e recebe
+imediatamente `ReceberStatusMotor` com o snapshot atual. Após uma nova
+telemetria, o backend publica o snapshot atualizado em broadcast global.
+
+Cada lote de telemetria contém todas as escovas do motor. Portanto, o status
+publicado após o processamento do lote pode ser calculado com os dados recém
+recebidos, sem tratar o lote como parcial. O campo `motorId` permite que cada
+cliente filtre os snapshots do motor exibido.
+
+O payload contém:
+
+| Campo | Tipo | Semântica |
+|---|---|---|
+| `motorId` | inteiro | Motor monitorado |
+| `severidadeGeral` | string | Maior severidade entre as escovas |
+| `situacao` | string | `Online`, `Degradado` ou `Offline` |
+| `contagem` | objeto | Quantidade de escovas por severidade final |
+| `motivo` | objeto nulo | Gate disparado de maior severidade |
+| `escovas` | array | Última leitura e gates de cada escova |
+
+Os enums `severidadeGeral`, `escovas[].severidade` e `situacao` são sempre
+serializados como strings. O campo `desde` não faz parte deste primeiro
+contrato; será adicionado quando o histórico de transições for implementado.

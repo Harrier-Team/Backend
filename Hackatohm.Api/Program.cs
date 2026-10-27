@@ -38,6 +38,7 @@ builder.Services
     .Bind(builder.Configuration.GetSection(TelemetriaOptions.SectionName))
     .Validate(settings => settings.QueueCapacity > 0, "A capacidade da fila deve ser positiva.")
     .Validate(settings => settings.MaxBatchSize > 0, "O tamanho máximo do lote deve ser positivo.")
+    .Validate(settings => settings.OfflineAfterSeconds > 0, "O tempo para considerar o motor offline deve ser positivo.")
     .ValidateOnStart();
 
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();

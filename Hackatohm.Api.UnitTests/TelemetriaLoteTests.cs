@@ -66,7 +66,9 @@ public sealed class TelemetriaLoteTests
         }, "127.0.0.1", DateTimeOffset.UtcNow, "teste-unitario");
 
     private static ProcessarLeiturasLoteUseCase CriarUseCase(Store store, FakeHub hub, FakeEvaluator evaluator) =>
-        new(store, store, store, hub, evaluator, NullLogger<ProcessarLeiturasLoteUseCase>.Instance);
+        new(store, store, store, hub, evaluator,
+            new Hackatohm.Application.MotorStatus.MotorStatusService(null!, null!, evaluator),
+            Microsoft.Extensions.Options.Options.Create(new Hackatohm.Api.Queues.TelemetriaOptions()), NullLogger<ProcessarLeiturasLoteUseCase>.Instance);
 
     private sealed class Store(Sensor[] sensores) : ISensorRepository, ILeituraTemperaturaRepository, IUnitOfWork
     {
@@ -118,6 +120,7 @@ public sealed class TelemetriaLoteTests
         public Task ReceberLoteTelemetria(IEnumerable<TelemetriaRealtimeDto> leituras)
         { Publicacoes++; return Task.CompletedTask; }
         public Task ReceberTelemetria(TelemetriaRealtimeDto leitura) => throw new NotSupportedException();
+        public Task ReceberStatusMotor(Hackatohm.Api.DTOs.MotorStatus.MotorStatusResponseDto status) => Task.CompletedTask;
         public ITelemetriaClient AllExcept(IReadOnlyList<string> excludedConnectionIds) => throw new NotSupportedException();
         public ITelemetriaClient Client(string connectionId) => throw new NotSupportedException();
         public ITelemetriaClient Clients(IReadOnlyList<string> connectionIds) => throw new NotSupportedException();
