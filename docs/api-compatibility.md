@@ -75,8 +75,9 @@ da demonstração; não há fila durável ou idempotência persistente.
 
 `GET /api/leituras` retorna a última leitura persistida junto com `motorId` e
 `resultadosQualityGates`. Os gates são reavaliados no momento da consulta com
-as regras atualmente ativas e vinculadas ao motor; os resultados históricos
-dos gates não são persistidos nesta versão.
+as regras atualmente ativas e vinculadas ao motor; o resultado de cada gate em
+cada leitura não é persistido. Só são gravados os eventos de alerta, descritos em
+[Alertas de manutenção](#alertas-de-manutenção).
 
 O gradiente usa a última leitura **anterior** ao instante da amostra consultada;
 a assimetria usa as leituras do mesmo motor com o **mesmo timestamp** dessa
@@ -160,3 +161,53 @@ o status publicado após a ingestão representa o motor inteiro.
 
 O GET retorna 404 quando não há sensor ou leitura correspondente. Não existe
 consulta de histórico por período nesta entrega.
+
+## Alertas de manutenção
+
+`GET /api/alertas` lista os alertas de manutenção, do mais recente para o mais
+antigo. Um alerta é um **evento**, não uma leitura: nasce quando um Quality Gate
+passa a disparar e é encerrado (`resolvidoEm`) quando ele deixa de disparar. O
+backend não grava um registro por leitura nem o resultado de cada gate.
+
+Cada lote processado compara os gates com os alertas abertos do motor:
+
+- gate que dispara sem alerta aberto abre um alerta novo;
+- gate que continua disparando mantém o mesmo alerta e atualiza `severidade`,
+  `valorObservado`, `valorLimite`, `mensagem` e `atualizadoEm`;
+- gate que deixa de disparar, ou regra desativada, desvinculada ou excluída,
+  encerra o alerta. Se voltar a disparar, abre um alerta novo.
+
+A chave do alerta é a regra mais o sensor. A assimetria entre escovas descreve o
+motor inteiro, então gera um único alerta por motor, com `sensorId` e
+`numeroEscova` nulos. O alerta guarda `nomeRegra`, `tipoRegra` e `codigoRegra`,
+por isso continua legível depois que a regra é excluída (`regraQualidadeId` fica
+nulo). Os alertas são removidos junto com o motor ou o sensor.
+
+Filtros opcionais por query string:
+
+| Parâmetro | Semântica |
+|---|---|
+| `motorId` | Alertas de um motor |
+| `ativo` | `true` para em aberto, `false` para encerrados; omitido retorna ambos |
+| `categoria` | `Preditivo`, `Aceleracao` ou `Condicao` |
+| `tipoRegra` | Um tipo de regra exato; combinado com `categoria`, vale a interseção |
+| `severidade` | `Atencao`, `AlertaPreditivo` ou `Critico`, a severidade atual |
+| `pagina` | A partir de 1; padrão 1 |
+| `tamanho` | De 1 a 200; padrão 50 |
+
+`categoria` agrupa os tipos pelo que o alerta comunica: `Preditivo` é a previsão
+por tendência (o que vai acontecer), `Aceleracao` é o gradiente térmico e
+`Condicao` reúne limiar estático e assimetria (o que está acontecendo). A
+resposta traz a categoria de cada alerta.
+
+A resposta é `{ itens, pagina, tamanho, total }`. Cada item tem `id`, `motorId`,
+`sensorId`, `numeroEscova`, `regraQualidadeId`, `nomeRegra`, `tipoRegra`,
+`categoria`, `codigoRegra`, `severidade`, `valorObservado`, `valorLimite`,
+`mensagem`, `iniciadoEm`, `atualizadoEm`, `resolvidoEm` e `ativo`. A unidade de
+`valorObservado` depende do `tipoRegra`: °C no limiar e na assimetria, °C/min no
+gradiente e **minutos** na previsão por tendência. Parâmetros inválidos retornam
+400.
+
+O alerta registra a transição, não o histórico das leituras. Para a evolução da
+temperatura continuam valendo as leituras, e não existe consulta de histórico de
+leituras por período.

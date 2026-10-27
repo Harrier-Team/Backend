@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using Hackatohm.Api.Validation;
+using Hackatohm.Api.UseCases.Alertas;
 using Hackatohm.Api.UseCases.Leituras;
 using Hackatohm.Api.UseCases.Motores;
 using Hackatohm.Api.UseCases.RegrasQualidade;
@@ -21,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<ObterStatusMotorUseCase>();
         services.AddScoped<ListarMotoresUseCase>();
         services.AddScoped<DeletarMotorUseCase>();
+        services.AddScoped<ListarAlertasUseCase>();
         services.AddScoped<CadastrarSensorUseCase>();
         services.AddScoped<ObterSensorUseCase>();
         services.AddScoped<PingSensorUseCase>();

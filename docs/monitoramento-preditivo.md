@@ -98,7 +98,9 @@ sem modificar as temperaturas salvas. O `alertaDesgaste` devolvido pelo GET
 é recalculado para acompanhar os resultados. Não há push específico para
 alteração de regras: após editar, o frontend deve recarregar as leituras.
 
-Histórico completo das avaliações não é persistido. Registros antigos que já
+O resultado de cada gate em cada leitura não é persistido; só os eventos de
+alerta, que a listagem `GET /api/alertas` expõe (abertura, atualização e
+encerramento). Registros antigos que já
 tenham sido recebidos em lotes parciais só permitem reconstruir as leituras
 efetivamente existentes naquele instante; o novo contrato não cria amostras
 retroativas nem altera o banco por migration.

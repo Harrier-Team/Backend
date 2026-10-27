@@ -1,4 +1,5 @@
-﻿using Hackatohm.Domain.QualityGates.Rules;
+﻿using Hackatohm.Application.Alertas;
+using Hackatohm.Domain.QualityGates.Rules;
 using Hackatohm.Domain.QualityGates;
 using Hackatohm.Application.MotorStatus;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<IQualityGateRule, PrevisaoTendenciaRule>();
         services.AddScoped<IQualityGateEvaluator, QualityGateEvaluator>();
         services.AddScoped<IMotorStatusService, MotorStatusService>();
+        services.AddScoped<IAlertaManutencaoService, AlertaManutencaoService>();
 
         return services;
     }

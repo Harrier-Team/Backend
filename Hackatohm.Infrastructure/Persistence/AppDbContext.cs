@@ -13,6 +13,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<LeituraTemperatura> LeiturasTemperatura => Set<LeituraTemperatura>();
     public DbSet<RegraQualidade> RegrasQualidade => Set<RegraQualidade>();
     public DbSet<MotorRegraQualidade> MotoresRegrasQualidade => Set<MotorRegraQualidade>();
+    public DbSet<AlertaManutencao> AlertasManutencao => Set<AlertaManutencao>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -79,6 +80,41 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             // Índice para acelerar a busca no hot path de ingestão de telemetria
             entity.HasIndex(mr => new { mr.MotorId, mr.Ativo });
+        });
+
+        modelBuilder.Entity<AlertaManutencao>(entity =>
+        {
+            entity.ToTable("alertas_manutencao");
+            entity.HasKey(alerta => alerta.Id);
+            entity.Ignore(alerta => alerta.Ativo);
+            entity.Property(alerta => alerta.SensorId).HasMaxLength(64);
+            entity.Property(alerta => alerta.NomeRegra).HasMaxLength(120).IsRequired();
+            entity.Property(alerta => alerta.TipoRegra).HasMaxLength(100).IsRequired();
+            entity.Property(alerta => alerta.CodigoRegra).HasMaxLength(100).IsRequired();
+            entity.Property(alerta => alerta.Mensagem).HasMaxLength(500).IsRequired();
+            entity.Property(alerta => alerta.IniciadoEm).HasColumnType("timestamp with time zone");
+            entity.Property(alerta => alerta.AtualizadoEm).HasColumnType("timestamp with time zone");
+            entity.Property(alerta => alerta.ResolvidoEm).HasColumnType("timestamp with time zone");
+
+            entity.HasOne(alerta => alerta.Motor)
+                .WithMany()
+                .HasForeignKey(alerta => alerta.MotorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(alerta => alerta.Sensor)
+                .WithMany()
+                .HasForeignKey(alerta => alerta.SensorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // O alerta sobrevive à exclusão da regra, com o nome e o tipo já gravados.
+            entity.HasOne(alerta => alerta.RegraQualidade)
+                .WithMany()
+                .HasForeignKey(alerta => alerta.RegraQualidadeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Busca dos alertas abertos do motor na ingestão e listagem por motor.
+            entity.HasIndex(alerta => new { alerta.MotorId, alerta.ResolvidoEm });
+            entity.HasIndex(alerta => alerta.IniciadoEm);
         });
     }
 }

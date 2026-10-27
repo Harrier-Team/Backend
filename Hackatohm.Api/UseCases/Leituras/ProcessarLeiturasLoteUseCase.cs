@@ -6,6 +6,7 @@ using Hackatohm.Domain.QualityGates;
 using Hackatohm.Domain.QualityGates.Rules;
 using Microsoft.AspNetCore.SignalR;
 using Hackatohm.Api.Queues;
+using Hackatohm.Application.Alertas;
 using Hackatohm.Application.MotorStatus;
 using Microsoft.Extensions.Options;
 using Hackatohm.Api.UseCases.Motores;
@@ -43,6 +44,7 @@ public class ProcessarLeiturasLoteUseCase(
     IHubContext<TelemetriaHub, ITelemetriaClient> hubContext,
     IQualityGateEvaluator qualityGateEvaluator,
     IMotorStatusService motorStatusService,
+    IAlertaManutencaoService alertaManutencaoService,
     IOptions<TelemetriaOptions> telemetriaOptions,
     ILogger<ProcessarLeiturasLoteUseCase> logger)
 {
@@ -136,6 +138,15 @@ public class ProcessarLeiturasLoteUseCase(
                 AlertaDesgaste = resultadosAvaliacao.Any(resultado => resultado.DisparouAlerta)
             });
         }
+
+        // Mesma transação das leituras: o histórico de alertas nunca diverge do que foi salvo.
+        await alertaManutencaoService.RegistrarAsync(
+            motores[0],
+            [.. contextosAvaliacao.Select(contexto => new AvaliacaoSensor(
+                contexto.Sensor,
+                resultadosPorSensor[contexto.Sensor.Id]))],
+            dataRecebimento,
+            cancellationToken);
 
         await leituraTemperaturaRepository.AdicionarRangeAsync(
             leiturasParaSalvar,

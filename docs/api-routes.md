@@ -85,6 +85,18 @@ No tipo estático, ambos os limites ficam entre -55 e 200 °C. Nos demais,
 ambos são não negativos. Comparações usam `>=`: igualdade ao limite já aciona
 o respectivo nível. O aviso gera `AlertaPreditivo` e o crítico gera `Critico`.
 
+## Alertas de manutenção
+
+| Método | Rota | Sucesso | Descrição |
+|---|---|---:|---|
+| `GET` | `/api/alertas` | `200` | Lista os alertas de manutenção, do mais recente ao mais antigo. |
+
+Filtros opcionais: `motorId`, `ativo`, `categoria` (`Preditivo`, `Aceleracao` ou
+`Condicao`), `tipoRegra`, `severidade`, `pagina` (a partir de 1) e `tamanho` (1 a
+200, padrão 50). A resposta é `{ itens, pagina, tamanho, total }`; parâmetros
+inválidos retornam `400`. Campos e semântica em
+[api-compatibility.md](api-compatibility.md).
+
 ## Vínculos entre motores e regras
 
 | Método | Rota | Sucesso | Descrição |

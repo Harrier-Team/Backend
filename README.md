@@ -4,8 +4,10 @@ Backend da Hackatohm para monitoramento térmico de motores elétricos,
 especialmente das escovas. O serviço recebe lotes de telemetria, avalia
 Quality Gates, persiste as leituras e publica atualizações para o painel em
 tempo real. Nesta etapa, o foco é entregar uma base funcional para manutenção
-preditiva; modelos de machine learning e histórico persistido dos resultados
-dos gates ainda não fazem parte do escopo implementado.
+preditiva: além dos gates, o sistema registra eventos de alerta e estima por
+tendência quando um limite será atingido. Modelos de machine learning ainda não
+fazem parte do escopo implementado, e o resultado de cada gate por leitura não
+é persistido.
 
 ## Tecnologias
 
@@ -133,6 +135,7 @@ desenvolvimento também pode ser consultado em
 | `GET` | `/api/motores` | Lista motores |
 | `GET` | `/api/motores/{id}` | Obtém um motor |
 | `GET` | `/api/motores/{id}/status` | Obtém o status agregado do motor |
+| `GET` | `/api/alertas` | Lista os alertas de manutenção, com filtros e paginação |
 | `DELETE` | `/api/motores/{id}` | Exclui um motor |
 | `POST` | `/api/sensores` | Cadastra um sensor |
 | `GET` | `/api/sensores/{sensorId}` | Obtém um sensor |
@@ -180,6 +183,12 @@ O GET de status do motor (`/api/motores/{id}/status`) consolida a última leitur
 de cada sensor cadastrado: maior severidade, contagem por severidade, motivo
 principal e situação (`Online`, `Degradado` ou `Offline`). O limite de silêncio
 é configurado em `Telemetria:OfflineAfterSeconds` (padrão 120). Detalhes em
+[docs/api-compatibility.md](docs/api-compatibility.md).
+
+Cada lote processado também atualiza os alertas de manutenção: um alerta abre
+quando um gate passa a disparar e é encerrado quando ele deixa de disparar. O
+`GET /api/alertas` lista esses eventos, com filtro por motor, estado, categoria
+(`Preditivo`, `Aceleracao` ou `Condicao`), tipo de regra e severidade. Detalhes em
 [docs/api-compatibility.md](docs/api-compatibility.md).
 
 ## Atualizações em tempo real
@@ -261,5 +270,6 @@ HTTP e códigos de erro estão em
 - Confirmação durável ao ESP, fila persistente, reenvio histórico, machine
   learning e um serviço separado de consolidação do motor ficam fora desta
   entrega. O painel pode resumir os resultados atuais pela maior severidade.
-- Não há endpoint de histórico paginado nesta versão: o frontend forma a
-  janela do gráfico com os eventos recebidos durante a sessão.
+- Não há endpoint de histórico de leituras por período nesta versão: o frontend
+  forma a janela do gráfico com os eventos recebidos durante a sessão. Só a
+  lista de alertas (`/api/alertas`) é paginada.

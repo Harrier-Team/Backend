@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<ILeituraTemperaturaRepository, LeituraTemperaturaRepository>();
         services.AddScoped<IRegraQualidadeRepository, RegraQualidadeRepository>();
         services.AddScoped<IMotorRegraQualidadeRepository, MotorRegraQualidadeRepository>();
+        services.AddScoped<IAlertaManutencaoRepository, AlertaManutencaoRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;

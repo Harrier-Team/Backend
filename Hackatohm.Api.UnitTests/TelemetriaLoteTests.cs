@@ -36,6 +36,31 @@ public sealed class TelemetriaLoteTests
     }
 
     [Fact]
+    public async Task ProcessarAsync_RegistraAlertasDoMotorComOsGatesDoLote()
+    {
+        var store = new Store([CriarSensor(1, 12), CriarSensor(2, 12)]);
+        var alertas = new FakeAlertaService();
+        var lote = CriarLote([1, 2]);
+
+        await CriarUseCase(store, new FakeHub(), new FakeEvaluator(), alertas).ProcessarAsync(lote);
+
+        var chamada = Assert.Single(alertas.Chamadas);
+        Assert.Equal((12, 2, lote.DataRecebimento), chamada);
+    }
+
+    [Fact]
+    public async Task ProcessarAsync_NaoRegistraAlertasQuandoOLoteEhRejeitado()
+    {
+        var store = new Store([CriarSensor(1, 12), CriarSensor(2, 12)]);
+        var alertas = new FakeAlertaService();
+
+        await CriarUseCase(store, new FakeHub(), new FakeEvaluator(), alertas)
+            .ProcessarAsync(CriarLote([1]));
+
+        Assert.Empty(alertas.Chamadas);
+    }
+
+    [Fact]
     public async Task ProcessarAsync_SalvaEPublicaTodosOsSensoresDoMotorComContextoCompleto()
     {
         var store = new Store([CriarSensor(1, 12), CriarSensor(2, 12)]);
@@ -65,10 +90,30 @@ public sealed class TelemetriaLoteTests
             { NumeroEscova = numero, Temperatura = 40 + numero }).ToList()
         }, "127.0.0.1", DateTimeOffset.UtcNow, "teste-unitario");
 
-    private static ProcessarLeiturasLoteUseCase CriarUseCase(Store store, FakeHub hub, FakeEvaluator evaluator) =>
+    private static ProcessarLeiturasLoteUseCase CriarUseCase(
+        Store store,
+        FakeHub hub,
+        FakeEvaluator evaluator,
+        FakeAlertaService? alertas = null) =>
         new(store, store, store, hub, evaluator,
             new Hackatohm.Application.MotorStatus.MotorStatusService(null!, null!, evaluator),
+            alertas ?? new FakeAlertaService(),
             Microsoft.Extensions.Options.Options.Create(new Hackatohm.Api.Queues.TelemetriaOptions()), NullLogger<ProcessarLeiturasLoteUseCase>.Instance);
+
+    private sealed class FakeAlertaService : Hackatohm.Application.Alertas.IAlertaManutencaoService
+    {
+        public List<(int MotorId, int Sensores, DateTimeOffset Agora)> Chamadas { get; } = [];
+
+        public Task<IReadOnlyList<AlertaManutencao>> RegistrarAsync(
+            int motorId,
+            IReadOnlyList<Hackatohm.Application.Alertas.AvaliacaoSensor> avaliacoes,
+            DateTimeOffset agora,
+            CancellationToken cancellationToken = default)
+        {
+            Chamadas.Add((motorId, avaliacoes.Count, agora));
+            return Task.FromResult<IReadOnlyList<AlertaManutencao>>([]);
+        }
+    }
 
     private sealed class Store(Sensor[] sensores) : ISensorRepository, ILeituraTemperaturaRepository, IUnitOfWork
     {

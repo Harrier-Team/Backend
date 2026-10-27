@@ -142,8 +142,10 @@ regra. Nesse caso, `severidade: "Normal"` apenas preserva a enumeração existen
 sem atestar normalidade; apresente "Aguardando amostras". Consulte
 [api-compatibility.md](api-compatibility.md).
 
-As avaliações são eventos transitórios. O backend não persiste histórico de
-resultados nesta versão.
+As avaliações são eventos transitórios: o backend não persiste o resultado de
+cada gate por leitura. Os alertas de manutenção (gate que passou a disparar) são
+gravados e consultados por `GET /api/alertas`; veja
+[api-compatibility.md](api-compatibility.md).
 
 ## Distribuição dos eventos
 

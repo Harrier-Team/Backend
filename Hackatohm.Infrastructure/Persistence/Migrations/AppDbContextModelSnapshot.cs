@@ -22,6 +22,78 @@ namespace Hackatohm.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Hackatohm.Domain.Entities.AlertaManutencao", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CodigoRegra")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("IniciadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Mensagem")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("MotorId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NomeRegra")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<int?>("NumeroEscova")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("RegraQualidadeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ResolvidoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SensorId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("Severidade")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TipoRegra")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<double?>("ValorLimite")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("ValorObservado")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IniciadoEm");
+
+                    b.HasIndex("RegraQualidadeId");
+
+                    b.HasIndex("SensorId");
+
+                    b.HasIndex("MotorId", "ResolvidoEm");
+
+                    b.ToTable("alertas_manutencao", (string)null);
+                });
+
             modelBuilder.Entity("Hackatohm.Domain.Entities.LeituraTemperatura", b =>
                 {
                     b.Property<long>("Id")
@@ -164,6 +236,31 @@ namespace Hackatohm.Infrastructure.Persistence.Migrations
                     b.HasIndex("MotorId");
 
                     b.ToTable("sensores", (string)null);
+                });
+
+            modelBuilder.Entity("Hackatohm.Domain.Entities.AlertaManutencao", b =>
+                {
+                    b.HasOne("Hackatohm.Domain.Entities.Motor", "Motor")
+                        .WithMany()
+                        .HasForeignKey("MotorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Hackatohm.Domain.Entities.RegraQualidade", "RegraQualidade")
+                        .WithMany()
+                        .HasForeignKey("RegraQualidadeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Hackatohm.Domain.Entities.Sensor", "Sensor")
+                        .WithMany()
+                        .HasForeignKey("SensorId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Motor");
+
+                    b.Navigation("RegraQualidade");
+
+                    b.Navigation("Sensor");
                 });
 
             modelBuilder.Entity("Hackatohm.Domain.Entities.LeituraTemperatura", b =>
