@@ -93,9 +93,6 @@ calculada, não confirmação de condição saudável. O frontend deve mostrar
 "Aguardando amostras" nesse caso. Lista vazia indica ausência de regras ativas
 aplicáveis e deve ser exibida como "Sem regras".
 
-O GET retorna 404 quando não há sensor ou leitura correspondente. Não existe
-consulta de histórico por período nesta entrega.
-
 ## Status agregado do motor
 
 `GET /api/motores/{motorId}/status` retorna a situação consolidada do motor,
@@ -109,9 +106,28 @@ principal motivo e a última leitura de cada escova.
 - `Degradado`: apenas parte das escovas possui leitura recente;
 - `Offline`: o motor não possui leitura recente ou ainda não possui leituras.
 
+A cobertura é medida contra **todos os sensores cadastrados** no motor: um
+sensor sem nenhuma leitura impede `Online` e deixa o motor `Degradado`. Esses
+sensores não aparecem em `escovas` nem entram na contagem por severidade.
+
+O status é reavaliado na consulta com o mesmo contexto do GET de última leitura:
+o gradiente usa a leitura **anterior** de cada sensor e a assimetria usa as
+leituras do motor com o mesmo timestamp da amostra. `alertaDesgaste` de cada
+escova é derivado dos gates reavaliados, não da flag gravada na ingestão.
+
+`Offline` é calculado apenas quando o status é consultado ou publicado; o
+backend não emite evento quando um ESP fica em silêncio. Cabe ao cliente
+consultar `GET /api/motores/{motorId}/status` quando deixar de receber eventos
+por um tempo (por exemplo, 30 s) para obter a situação atualizada.
+
+O GET de status retorna 404 quando o motor não existe.
+
 O campo `desde` não faz parte deste primeiro contrato. Os enums
 `severidadeGeral`, `escovas[].severidade` e `situacao` são serializados como
 strings.
 
-Cada lote de telemetria contém todas as escovas do motor. O status agregado
-publicado após a ingestão representa o conjunto completo recebido naquele lote.
+O worker só aceita lotes com o conjunto completo de sensores do motor. Por isso
+o status publicado após a ingestão representa o motor inteiro.
+
+O GET retorna 404 quando não há sensor ou leitura correspondente. Não existe
+consulta de histórico por período nesta entrega.

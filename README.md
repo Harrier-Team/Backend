@@ -132,6 +132,7 @@ desenvolvimento também pode ser consultado em
 | `POST` | `/api/motores` | Cadastra um motor e seus sensores iniciais |
 | `GET` | `/api/motores` | Lista motores |
 | `GET` | `/api/motores/{id}` | Obtém um motor |
+| `GET` | `/api/motores/{id}/status` | Obtém o status agregado do motor |
 | `DELETE` | `/api/motores/{id}` | Exclui um motor |
 | `POST` | `/api/sensores` | Cadastra um sensor |
 | `GET` | `/api/sensores/{sensorId}` | Obtém um sensor |
@@ -168,10 +169,17 @@ atualmente ativas. Assim, gradiente e assimetria também são calculados na
 recarga do painel. O booleano `alertaDesgaste` da resposta acompanha essa
 reavaliação; a flag armazenada no histórico permanece como foi na ingestão.
 
+O GET de status do motor (`/api/motores/{id}/status`) consolida a última leitura
+de cada sensor cadastrado: maior severidade, contagem por severidade, motivo
+principal e situação (`Online`, `Degradado` ou `Offline`). O limite de silêncio
+é configurado em `Telemetria:OfflineAfterSeconds` (padrão 120). Detalhes em
+[docs/api-compatibility.md](docs/api-compatibility.md).
+
 ## Atualizações em tempo real
 
 O hub SignalR está disponível em `/api/telemetriaHub`. Os eventos enviados aos
-clientes são `ReceberLoteTelemetria` e `ReceberTelemetria`. Os DTOs incluem as
+clientes são `ReceberLoteTelemetria`, `ReceberTelemetria` e
+`ReceberStatusMotor` (status agregado do motor, publicado após cada lote). Os DTOs incluem as
 leituras e os resultados das regras avaliadas. O contrato completo está em
 [docs/signalr-contract.md](docs/signalr-contract.md).
 
