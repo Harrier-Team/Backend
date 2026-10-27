@@ -46,17 +46,27 @@ recente na próxima cadência, aceitando lacunas em caso de falha.
 ## Regras disponíveis
 
 Todas usam `parametros: {"aviso": ..., "critico": ...}`, com números finitos
-e `aviso < critico`. Configuração e vínculo devem estar ativos para avaliação.
+e, exceto na previsão por tendência, `aviso < critico`. Configuração e vínculo
+devem estar ativos para avaliação.
 
 | `tipoRegra` | Valor avaliado | Unidade dos limites | Condição para avaliar |
 |---|---|---|---|
 | `temperatura.limiar_estatico` | Temperatura atual | °C, de -55 a 200 | Uma leitura válida |
 | `temperatura.gradiente_termico` | `(T_atual - T_anterior) / intervalo_em_minutos` | °C/min, não negativos | Duas leituras do sensor com intervalo positivo |
 | `temperatura.assimetria_escovas` | `T_máxima - T_mínima` no lote | Diferença em °C, não negativos | Pelo menos duas escovas no lote |
+| `temperatura.previsao_tendencia` | Minutos estimados até `temperaturaLimite`, pela reta das últimas leituras | Minutos (`aviso > critico`), mais `temperaturaLimite` em °C | Pelo menos 5 leituras do sensor |
 
 O limite crítico é verificado primeiro. Valor `>= critico` gera `Critico`;
 senão, `>= aviso` gera `AlertaPreditivo`; abaixo do aviso gera `Normal`.
 No gradiente, queda/estabilidade (`<= 0`) não gera alerta de subida.
+
+Limiar, assimetria e gradiente descrevem o estado presente ou a velocidade de
+subida. Só a previsão por tendência responde *quando* o limite será atingido: o
+tempo estimado até `temperaturaLimite` é o valor observado do resultado. Ela é
+uma extrapolação linear das últimas leituras, não um modelo de machine learning,
+e perde precisão se o comportamento térmico não for linear. Na previsão, menos
+minutos até o limite significa mais urgência; por isso `aviso` é maior que
+`critico`.
 
 Exemplo de bancada: 40 para 45 °C em 30 s corresponde a 10 °C/min.
 Um lote com 40, 44 e 58 °C tem assimetria de 18 °C. Os números não são

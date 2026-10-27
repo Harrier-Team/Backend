@@ -11,11 +11,13 @@ namespace Hackatohm.Domain.QualityGates;
 /// <param name="LeiturasIrmasDoLote">Outras leituras recebidas no mesmo pacote (permite calcular desbalanceamento/assimetria entre escovas).</param>
 /// <param name="TemperaturaAnterior">Última temperatura persistida do sensor (permite calcular gradiente térmico dT/dt).</param>
 /// <param name="IntervaloDesdeUltimaLeitura">Tempo decorrido desde a última telemetria deste sensor.</param>
+/// <param name="HistoricoRecente">Leituras anteriores do sensor, sem incluir a atual (permite estimar tendência).</param>
 public record ContextoAvaliacao(
     Sensor Sensor,
     LeituraTelemetriaDto LeituraAtual,
     DateTimeOffset DataHora,
     IReadOnlyList<LeituraTelemetriaDto>? LeiturasIrmasDoLote = null,
     double? TemperaturaAnterior = null,
-    TimeSpan? IntervaloDesdeUltimaLeitura = null
+    TimeSpan? IntervaloDesdeUltimaLeitura = null,
+    IReadOnlyList<AmostraTemperatura>? HistoricoRecente = null
 );

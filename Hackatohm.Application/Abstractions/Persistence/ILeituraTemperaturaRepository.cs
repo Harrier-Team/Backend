@@ -1,4 +1,5 @@
 ﻿using Hackatohm.Domain.Entities;
+using Hackatohm.Domain.QualityGates;
 
 namespace Hackatohm.Application.Abstractions.Persistence;
 
@@ -18,6 +19,15 @@ public interface ILeituraTemperaturaRepository
     Task<IReadOnlyList<LeituraTemperatura>> ObterPorMotorNoInstanteAsync(
         int motorId,
         DateTimeOffset instante,
+        CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Obtém, por sensor, até <paramref name="quantidade"/> leituras anteriores a <paramref name="antesDe"/>
+    /// (ou todas, quando nulo), da mais antiga para a mais recente.
+    /// </summary>
+    Task<IReadOnlyDictionary<string, IReadOnlyList<AmostraTemperatura>>> ObterHistoricoRecentePorSensoresAsync(
+        IReadOnlyCollection<string> sensorIds,
+        DateTimeOffset? antesDe,
+        int quantidade,
         CancellationToken cancellationToken = default);
     Task<IReadOnlyDictionary<string, LeituraTemperatura>> ObterMaisRecentesPorSensoresAsync(
         IReadOnlyCollection<string> sensorIds,

@@ -158,10 +158,17 @@ publica via SignalR. Lotes incompatíveis com o cadastro são descartados com
 registro no log. O ESP não precisa esperar confirmação de persistência.
 
 O catálogo aceita `temperatura.limiar_estatico`,
-`temperatura.gradiente_termico` e `temperatura.assimetria_escovas`.
+`temperatura.gradiente_termico`, `temperatura.assimetria_escovas` e
+`temperatura.previsao_tendencia`.
 Telemetria e limites de regras estáticas aceitam **-55 a 200 °C**, inclusive.
 Gradiente usa °C/minuto e assimetria usa diferença em °C; seus limites são
-finitos e não negativos. Todos exigem `aviso < critico`.
+finitos e não negativos. Essas três exigem `aviso < critico`.
+
+A previsão por tendência ajusta uma reta às últimas leituras de cada escova e
+estima em quantos minutos ela atingirá `temperaturaLimite`. Nela, `aviso` e
+`critico` são **minutos de antecedência**, com `aviso > critico`; `janela`
+(5 a 60 leituras, padrão 12) é opcional. Exemplo de `parametros`:
+`{"aviso": 30, "critico": 10, "temperaturaLimite": 95}`.
 
 O GET da última leitura reconstrói o contexto com a amostra anterior do
 sensor e as leituras do motor no mesmo instante do lote, reavaliando as regras

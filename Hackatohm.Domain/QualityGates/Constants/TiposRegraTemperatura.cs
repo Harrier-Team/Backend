@@ -23,6 +23,12 @@ public static class TiposRegraTemperatura
     public const string AssimetriaEscovas = "temperatura.assimetria_escovas";
 
     /// <summary>
+    /// Estima, por regressão linear das últimas leituras, em quantos minutos a escova
+    /// atingirá uma temperatura limite se a tendência atual se mantiver.
+    /// </summary>
+    public const string PrevisaoTendencia = "temperatura.previsao_tendencia";
+
+    /// <summary>
     /// Avalia a previsão de desgaste em ml com base na temperatura e histórico de leituras.
     /// Sendo uma avaliação feita por machine learning, a implementação desta regra ainda não está disponível.
     /// </summary>

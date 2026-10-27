@@ -1,5 +1,6 @@
 namespace Hackatohm.Api.DTOs;
 
+using System.Text.Json.Serialization;
 using Hackatohm.Domain.QualityGates.Constants;
 
 /// <summary>Dados para criar uma regra de limiar de temperatura.</summary>
@@ -12,8 +13,16 @@ public sealed record CadastrarRegraQualidadeRequestDto : IRegraQualidadeRequestD
     public bool Ativo { get; init; } = true;
 }
 
-/// <summary>Limites térmicos que acionam os estados de alerta e crítico.</summary>
-public sealed record ParametrosLimiarTemperaturaDto(double Aviso, double Critico);
+/// <summary>
+/// Limites que acionam os estados de alerta e crítico. Na regra de previsão por tendência,
+/// <c>aviso</c> e <c>critico</c> são minutos de antecedência (aviso maior que crítico) e
+/// <c>temperaturaLimite</c> é obrigatória; <c>janela</c> é opcional (padrão 12).
+/// </summary>
+public sealed record ParametrosLimiarTemperaturaDto(
+    double Aviso,
+    double Critico,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] double? TemperaturaLimite = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Janela = null);
 
 public interface IRegraQualidadeRequestDto
 {

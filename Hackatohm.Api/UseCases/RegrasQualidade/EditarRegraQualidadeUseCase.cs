@@ -26,9 +26,7 @@ public sealed class EditarRegraQualidadeUseCase(
         regra.Nome = request.Nome.Trim();
         regra.Descricao = request.Descricao?.Trim();
         regra.TipoRegra = request.TipoRegra;
-        regra.ParametrosJson = JsonSerializer.Serialize(
-            new ParametrosLimiarTemperatura(request.Parametros.Aviso, request.Parametros.Critico),
-            new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        regra.ParametrosJson = ParametrosRegraSerializer.Serializar(request.TipoRegra, request.Parametros);
         regra.Ativo = request.Ativo;
 
         regraQualidadeRepository.Atualizar(regra);

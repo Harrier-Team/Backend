@@ -3,6 +3,7 @@ using Hackatohm.Application.Abstractions.Persistence;
 using Hackatohm.Api.DTOs;
 using Hackatohm.Domain.Entities;
 using Hackatohm.Domain.QualityGates;
+using Hackatohm.Domain.QualityGates.Rules;
 
 namespace Hackatohm.Api.UseCases.Leituras;
 
@@ -34,6 +35,12 @@ public sealed class ObterUltimaLeituraUseCase(
         var lote = await leituraTemperaturaRepository.ObterPorMotorNoInstanteAsync(
             sensor.MotorId, leitura.DataHora, cancellationToken);
 
+        var historico = await leituraTemperaturaRepository.ObterHistoricoRecentePorSensoresAsync(
+            [sensorId],
+            leitura.DataHora,
+            ParametrosPrevisaoTendencia.JanelaMaxima - 1,
+            cancellationToken);
+
         var contexto = new ContextoAvaliacao(
             sensor,
             new LeituraTelemetriaDto
@@ -48,7 +55,8 @@ public sealed class ObterUltimaLeituraUseCase(
                 Temperatura = item.ValorCelsius
             }).ToArray(),
             leituraAnterior?.ValorCelsius,
-            leituraAnterior is null ? null : leitura.DataHora - leituraAnterior.DataHora);
+            leituraAnterior is null ? null : leitura.DataHora - leituraAnterior.DataHora,
+            historico.GetValueOrDefault(sensorId));
         var resultados = await qualityGateEvaluator.AvaliarAsync(
             contexto,
             cancellationToken);

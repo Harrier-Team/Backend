@@ -1,4 +1,4 @@
-using Hackatohm.Api.DTOs;
+﻿using Hackatohm.Api.DTOs;
 using Hackatohm.Api.DTOs.Hubs;
 using Hackatohm.Api.Hubs;
 using Hackatohm.Api.Queues;
@@ -88,6 +88,10 @@ public sealed class TelemetriaLoteTests
         public Task AdicionarRangeAsync(IEnumerable<LeituraTemperatura> leituras, CancellationToken cancellationToken = default)
         { Salvas.AddRange(leituras); return Task.CompletedTask; }
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => Task.FromResult(++Commits);
+        public Task<IReadOnlyDictionary<string, IReadOnlyList<AmostraTemperatura>>> ObterHistoricoRecentePorSensoresAsync(
+            IReadOnlyCollection<string> ids, DateTimeOffset? antesDe, int quantidade, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyDictionary<string, IReadOnlyList<AmostraTemperatura>>>(
+                new Dictionary<string, IReadOnlyList<AmostraTemperatura>>());
         public Task<IReadOnlyDictionary<string, LeituraTemperatura>> ObterMaisRecentesPorSensoresAsync(
             IReadOnlyCollection<string> ids, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyDictionary<string, LeituraTemperatura>>(new Dictionary<string, LeituraTemperatura>());

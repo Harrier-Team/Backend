@@ -25,9 +25,7 @@ public sealed class CadastrarRegraQualidadeUseCase(
             Nome = request.Nome.Trim(),
             Descricao = request.Descricao?.Trim(),
             TipoRegra = request.TipoRegra,
-            ParametrosJson = JsonSerializer.Serialize(
-                new ParametrosLimiarTemperatura(request.Parametros.Aviso, request.Parametros.Critico),
-                new JsonSerializerOptions(JsonSerializerDefaults.Web)),
+            ParametrosJson = ParametrosRegraSerializer.Serializar(request.TipoRegra, request.Parametros),
             Ativo = request.Ativo
         };
 

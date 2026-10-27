@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddScoped<IQualityGateRule, LimiarTemperaturaRule>();
         services.AddScoped<IQualityGateRule, GradienteTemperaturaRule>();
         services.AddScoped<IQualityGateRule, AssimetriaEscovasRule>();
+        services.AddScoped<IQualityGateRule, PrevisaoTendenciaRule>();
         services.AddScoped<IQualityGateEvaluator, QualityGateEvaluator>();
         services.AddScoped<IMotorStatusService, MotorStatusService>();
 

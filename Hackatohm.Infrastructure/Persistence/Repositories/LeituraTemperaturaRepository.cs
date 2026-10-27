@@ -1,5 +1,6 @@
 ﻿using Hackatohm.Application.Abstractions.Persistence;
 using Hackatohm.Domain.Entities;
+using Hackatohm.Domain.QualityGates;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hackatohm.Infrastructure.Persistence.Repositories;
@@ -54,6 +55,38 @@ public sealed class LeituraTemperaturaRepository(AppDbContext context) : ILeitur
             .Include(leitura => leitura.Sensor)
             .Where(leitura => leitura.Sensor.MotorId == motorId && leitura.DataHora == instante)
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyDictionary<string, IReadOnlyList<AmostraTemperatura>>> ObterHistoricoRecentePorSensoresAsync(
+        IReadOnlyCollection<string> sensorIds,
+        DateTimeOffset? antesDe,
+        int quantidade,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(sensorIds);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(quantidade);
+
+        var historico = new Dictionary<string, IReadOnlyList<AmostraTemperatura>>(
+            StringComparer.OrdinalIgnoreCase);
+        foreach (var sensorId in sensorIds.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var consulta = context.LeiturasTemperatura
+                .AsNoTracking()
+                .Where(leitura => leitura.SensorId == sensorId);
+            if (antesDe is not null)
+                consulta = consulta.Where(leitura => leitura.DataHora < antesDe);
+
+            var leituras = await consulta
+                .OrderByDescending(leitura => leitura.DataHora)
+                .ThenByDescending(leitura => leitura.Id)
+                .Take(quantidade)
+                .Select(leitura => new AmostraTemperatura(leitura.DataHora, leitura.ValorCelsius))
+                .ToListAsync(cancellationToken);
+            leituras.Reverse();
+            historico[sensorId] = leituras;
+        }
+
+        return historico;
+    }
 
     public async Task<IReadOnlyDictionary<string, LeituraTemperatura>> ObterMaisRecentesPorSensoresAsync(
         IReadOnlyCollection<string> sensorIds,

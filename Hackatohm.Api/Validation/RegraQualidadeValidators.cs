@@ -1,6 +1,7 @@
 using FluentValidation;
 using Hackatohm.Api.DTOs;
 using Hackatohm.Domain.QualityGates.Constants;
+using Hackatohm.Domain.QualityGates.Rules;
 
 namespace Hackatohm.Api.Validation;
 
@@ -29,18 +30,19 @@ public abstract class RegraQualidadeRequestValidator<TRequest> : AbstractValidat
 
         RuleFor(request => request.TipoRegra)
             .Must(TiposRegraSuportados)
-            .WithMessage("O tipo de regra deve ser limiar estático, gradiente térmico ou assimetria entre escovas.");
+            .WithMessage("O tipo de regra deve ser limiar estático, gradiente térmico, assimetria entre escovas ou previsão por tendência.");
 
         RuleFor(request => request.Parametros)
             .NotNull().WithMessage("Os parâmetros da regra são obrigatórios.")
             .Must((request, parametros) => ParametrosValidos(request.TipoRegra, parametros))
-            .WithMessage("Os parâmetros devem ser finitos, ter aviso menor que crítico e respeitar os limites do tipo de regra.");
+            .WithMessage("Os parâmetros devem ser finitos e respeitar os limites do tipo de regra: aviso menor que crítico; na previsão por tendência, aviso e crítico são minutos (aviso maior que crítico) e a temperatura limite é obrigatória.");
     }
 
     private static bool TiposRegraSuportados(string tipoRegra) =>
         tipoRegra is TiposRegraTemperatura.LimiarEstatico
             or TiposRegraTemperatura.GradienteTermico
-            or TiposRegraTemperatura.AssimetriaEscovas;
+            or TiposRegraTemperatura.AssimetriaEscovas
+            or TiposRegraTemperatura.PrevisaoTendencia;
 
     private static bool ParametrosValidos(
         string tipoRegra,
@@ -48,6 +50,26 @@ public abstract class RegraQualidadeRequestValidator<TRequest> : AbstractValidat
         parametros is not null &&
         double.IsFinite(parametros.Aviso) &&
         double.IsFinite(parametros.Critico) &&
+        (tipoRegra == TiposRegraTemperatura.PrevisaoTendencia
+            ? ParametrosTendenciaValidos(parametros)
+            : ParametrosLimiarValidos(tipoRegra, parametros));
+
+    private static bool ParametrosTendenciaValidos(ParametrosLimiarTemperaturaDto parametros) =>
+        parametros.TemperaturaLimite is { } limite &&
+        double.IsFinite(limite) &&
+        limite >= -55 &&
+        limite <= 200 &&
+        parametros.Critico > 0 &&
+        parametros.Aviso > parametros.Critico &&
+        (parametros.Janela is null ||
+         parametros.Janela is >= ParametrosPrevisaoTendencia.JanelaMinima
+             and <= ParametrosPrevisaoTendencia.JanelaMaxima);
+
+    private static bool ParametrosLimiarValidos(
+        string tipoRegra,
+        ParametrosLimiarTemperaturaDto parametros) =>
+        parametros.TemperaturaLimite is null &&
+        parametros.Janela is null &&
         (tipoRegra == TiposRegraTemperatura.LimiarEstatico
             ? parametros.Aviso >= -55 &&
               parametros.Aviso <= 200 &&

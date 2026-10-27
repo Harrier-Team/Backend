@@ -3,6 +3,7 @@ using Hackatohm.Domain.Entities;
 using Hackatohm.Domain.MotorStatus;
 using Hackatohm.Domain.QualityGates;
 using Hackatohm.Domain.QualityGates.Enums;
+using Hackatohm.Domain.QualityGates.Rules;
 
 namespace Hackatohm.Application.MotorStatus;
 
@@ -34,6 +35,11 @@ public sealed class MotorStatusService(
                 sensor.Id, leitura.DataHora, cancellationToken);
             var lote = await leituraRepository.ObterPorMotorNoInstanteAsync(
                 motorId, leitura.DataHora, cancellationToken);
+            var historico = await leituraRepository.ObterHistoricoRecentePorSensoresAsync(
+                [sensor.Id],
+                leitura.DataHora,
+                ParametrosPrevisaoTendencia.JanelaMaxima - 1,
+                cancellationToken);
 
             contextos.Add(new ContextoAvaliacao(
                 sensor,
@@ -49,7 +55,8 @@ public sealed class MotorStatusService(
                     Temperatura = item.ValorCelsius
                 }).ToArray(),
                 anterior?.ValorCelsius,
-                anterior is null ? null : leitura.DataHora - anterior.DataHora));
+                anterior is null ? null : leitura.DataHora - anterior.DataHora,
+                historico.GetValueOrDefault(sensor.Id)));
         }
 
         var gates = await qualityGateEvaluator.AvaliarLoteAsync(contextos, cancellationToken);

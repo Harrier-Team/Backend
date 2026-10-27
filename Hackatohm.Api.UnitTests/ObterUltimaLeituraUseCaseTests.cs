@@ -1,10 +1,11 @@
-using FluentValidation;
+﻿using FluentValidation;
 using Hackatohm.Api.DTOs;
 using Hackatohm.Api.UseCases.Leituras;
 using Hackatohm.Api.Validation;
 using Hackatohm.Application.Abstractions.Persistence;
 using Hackatohm.Application.QualityGates;
 using Hackatohm.Domain.Entities;
+using Hackatohm.Domain.QualityGates;
 using Hackatohm.Domain.QualityGates.Rules;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -167,6 +168,22 @@ public sealed class ObterUltimaLeituraUseCaseTests
             long leituraId,
             CancellationToken cancellationToken = default) =>
             Task.FromResult<LeituraTemperatura?>(null);
+
+        public Task<IReadOnlyDictionary<string, IReadOnlyList<AmostraTemperatura>>> ObterHistoricoRecentePorSensoresAsync(
+            IReadOnlyCollection<string> sensorIds,
+            DateTimeOffset? antesDe,
+            int quantidade,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyDictionary<string, IReadOnlyList<AmostraTemperatura>>>(
+                sensorIds.ToDictionary(
+                    id => id,
+                    id => (IReadOnlyList<AmostraTemperatura>)leituras
+                        .Where(leitura => leitura.SensorId == id && (antesDe is null || leitura.DataHora < antesDe))
+                        .OrderByDescending(leitura => leitura.DataHora)
+                        .Take(quantidade)
+                        .OrderBy(leitura => leitura.DataHora)
+                        .Select(leitura => new AmostraTemperatura(leitura.DataHora, leitura.ValorCelsius))
+                        .ToArray()));
 
         public Task<IReadOnlyDictionary<string, LeituraTemperatura>> ObterMaisRecentesPorSensoresAsync(
             IReadOnlyCollection<string> sensorIds,

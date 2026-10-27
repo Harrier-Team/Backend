@@ -1,4 +1,4 @@
-using Hackatohm.Application.Abstractions.Persistence;
+﻿using Hackatohm.Application.Abstractions.Persistence;
 using Hackatohm.Application.MotorStatus;
 using Hackatohm.Application.QualityGates;
 using Hackatohm.Domain.Entities;
@@ -118,6 +118,39 @@ public sealed class MotorStatusServiceTests
     }
 
     [Fact]
+    public async Task ObterAsync_UsaHistoricoRecenteParaPrevisaoPorTendencia()
+    {
+        var data = DateTimeOffset.UtcNow;
+        var motor = CriarMotor();
+        var leituras = CriarLeituras(motor, data, data);
+        leituras["sensor-1"].ValorCelsius = 55;
+        leituras["sensor-2"].ValorCelsius = 40;
+        // sensor-1 sobe 1 °C a cada 30 s (2 °C/min): faltam 20 min até 95 °C.
+        var historico = Enumerable.Range(1, 10)
+            .Select(indice => new LeituraTemperatura
+            {
+                SensorId = "sensor-1",
+                ValorCelsius = 55 - indice,
+                DataHora = data.AddSeconds(-30 * indice)
+            })
+            .ToArray();
+        var service = new MotorStatusService(
+            new FakeMotorRepository(motor),
+            new FakeLeituraRepository(leituras, historico, motor),
+            CriarEvaluator(
+                new PrevisaoTendenciaRule(),
+                "temperatura.previsao_tendencia",
+                """{"aviso":30,"critico":10,"temperaturaLimite":95}"""));
+
+        var resultado = await service.ObterAsync(motor.Id, TimeSpan.FromMinutes(2), data);
+
+        Assert.Equal(NivelSeveridade.AlertaPreditivo, resultado!.SeveridadeGeral);
+        Assert.Equal(1, resultado.Motivo!.NumeroEscova);
+        Assert.Equal("PREVISAO_TENDENCIA_ALERTA", resultado.Motivo.CodigoRegra);
+        Assert.Equal(20, resultado.Motivo.ValorObservado!.Value, precision: 3);
+    }
+
+    [Fact]
     public async Task ObterAsync_AssimetriaIgnoraLeiturasDeOutroInstante()
     {
         var data = DateTimeOffset.UtcNow;
@@ -200,6 +233,22 @@ public sealed class MotorStatusServiceTests
     {
         private IEnumerable<LeituraTemperatura> Todas =>
             (historico ?? []).Concat(leituras.Values);
+
+        public Task<IReadOnlyDictionary<string, IReadOnlyList<AmostraTemperatura>>> ObterHistoricoRecentePorSensoresAsync(
+            IReadOnlyCollection<string> sensorIds,
+            DateTimeOffset? antesDe,
+            int quantidade,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyDictionary<string, IReadOnlyList<AmostraTemperatura>>>(
+                sensorIds.ToDictionary(
+                    id => id,
+                    id => (IReadOnlyList<AmostraTemperatura>)Todas
+                        .Where(leitura => leitura.SensorId == id && (antesDe is null || leitura.DataHora < antesDe))
+                        .OrderByDescending(leitura => leitura.DataHora)
+                        .Take(quantidade)
+                        .OrderBy(leitura => leitura.DataHora)
+                        .Select(leitura => new AmostraTemperatura(leitura.DataHora, leitura.ValorCelsius))
+                        .ToArray()));
 
         public Task<IReadOnlyDictionary<string, LeituraTemperatura>> ObterMaisRecentesPorSensoresAsync(
             IReadOnlyCollection<string> sensorIds,

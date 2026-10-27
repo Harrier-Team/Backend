@@ -7,14 +7,10 @@ namespace Hackatohm.Api.UseCases.RegrasQualidade;
 
 internal static class RegraQualidadeResponseMapper
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-
     public static RegraQualidadeResponseDto Mapear(RegraQualidade regra)
     {
-        var parametros = JsonSerializer.Deserialize<ParametrosLimiarTemperatura>(
-            regra.ParametrosJson,
-            JsonOptions) ?? throw new InvalidOperationException(
-                $"A regra de qualidade {regra.Id} possui parâmetros inválidos.");
+        var parametros = ParametrosRegraSerializer.Desserializar(
+            regra.TipoRegra, regra.ParametrosJson, regra.Id);
 
         return new(
             regra.Id,
@@ -22,7 +18,7 @@ internal static class RegraQualidadeResponseMapper
             regra.Descricao,
             regra.TipoRegra,
             regra.SeveridadePadrao,
-            new(parametros.Aviso, parametros.Critico),
+            parametros,
             regra.Ativo,
             regra.CriadoEm);
     }

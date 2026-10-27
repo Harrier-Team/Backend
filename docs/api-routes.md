@@ -70,11 +70,16 @@ sem amostras suficientes estão em [api-compatibility.md](api-compatibility.md).
 | `DELETE` | `/api/regras-qualidade/{id}` | `204` | Exclui uma regra e seus vínculos. |
 
 O campo `tipoRegra` aceita `temperatura.limiar_estatico`,
-`temperatura.gradiente_termico` e `temperatura.assimetria_escovas`.
+`temperatura.gradiente_termico`, `temperatura.assimetria_escovas` e
+`temperatura.previsao_tendencia`.
 Os campos `parametros.aviso` e `parametros.critico` devem ser finitos e ter
 `aviso` menor que `critico`. Eles representam, respectivamente, temperatura em
 °C, taxa de subida em °C/minuto ou diferença entre escovas em °C, conforme o
-tipo escolhido.
+tipo escolhido. Na previsão por tendência a relação se inverte e as unidades
+mudam: ambos são minutos de antecedência, com `aviso` maior que `critico`, e o
+corpo exige ainda `parametros.temperaturaLimite` (°C, de -55 a 200), com
+`parametros.janela` opcional (5 a 60 leituras, padrão 12). Esses dois campos
+extras só são aceitos nesse tipo.
 
 No tipo estático, ambos os limites ficam entre -55 e 200 °C. Nos demais,
 ambos são não negativos. Comparações usam `>=`: igualdade ao limite já aciona

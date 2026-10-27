@@ -3,9 +3,12 @@
 ## Regras de qualidade
 
 O catálogo aceita os tipos `temperatura.limiar_estatico`,
-`temperatura.gradiente_termico` e `temperatura.assimetria_escovas`.
+`temperatura.gradiente_termico`, `temperatura.assimetria_escovas` e
+`temperatura.previsao_tendencia`.
 
-Todos usam os parâmetros `aviso` e `critico`, com `aviso` menor que `critico`.
+Todos usam os parâmetros `aviso` e `critico`. Limiar, gradiente e assimetria
+exigem `aviso` menor que `critico`; a previsão por tendência é descrita na seção
+própria mais abaixo.
 No limiar estático, os valores representam temperatura em °C e devem estar
 entre `-55` e `200`. No gradiente, representam a taxa de subida em °C/minuto.
 Na assimetria, representam a diferença entre escovas em °C. Gradiente e
@@ -92,6 +95,32 @@ Quando faltam amostras para calcular uma regra, seu resultado usa
 calculada, não confirmação de condição saudável. O frontend deve mostrar
 "Aguardando amostras" nesse caso. Lista vazia indica ausência de regras ativas
 aplicáveis e deve ser exibida como "Sem regras".
+
+## Previsão por tendência
+
+`temperatura.previsao_tendencia` é a única regra que olha para frente. Ela
+ajusta uma reta (mínimos quadrados) às últimas leituras do sensor, incluindo a
+atual, e estima em quantos minutos a temperatura atingirá `temperaturaLimite`
+se a tendência se mantiver.
+
+| Parâmetro | Semântica |
+|---|---|
+| `aviso` | Minutos de antecedência que geram `AlertaPreditivo` |
+| `critico` | Minutos de antecedência que geram `Critico`; positivo e menor que `aviso` |
+| `temperaturaLimite` | °C que se quer antecipar, de -55 a 200; obrigatório |
+| `janela` | Máximo de leituras no ajuste, de 5 a 60; padrão 12; opcional |
+
+No resultado, `valorObservado` são os **minutos estimados até o limite** e
+`valorLimite` é o horizonte (`aviso` ou `critico`) que foi atingido. Os códigos
+são `PREVISAO_TENDENCIA_ALERTA` e `PREVISAO_TENDENCIA_CRITICA`, e os metadados
+trazem `inclinacaoCelsiusPorMinuto`, `temperaturaLimite` e `amostras`. Com menos
+de 5 leituras o resultado é `DADOS_INSUFICIENTES`. Temperatura estável ou em
+queda não gera alerta. O front deve exibir esse `valorObservado` em minutos, não
+em °C.
+
+O GET de última leitura e o status do motor reconstroem o histórico anterior à
+amostra consultada, então reproduzem o diagnóstico do lote enquanto as leituras
+antigas existirem no banco.
 
 ## Status agregado do motor
 

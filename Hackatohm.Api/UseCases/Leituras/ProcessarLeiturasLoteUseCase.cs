@@ -3,6 +3,7 @@ using Hackatohm.Api.DTOs;
 using Hackatohm.Domain.Entities;
 using Hackatohm.Api.Hubs;
 using Hackatohm.Domain.QualityGates;
+using Hackatohm.Domain.QualityGates.Rules;
 using Microsoft.AspNetCore.SignalR;
 using Hackatohm.Api.Queues;
 using Hackatohm.Application.MotorStatus;
@@ -89,6 +90,12 @@ public class ProcessarLeiturasLoteUseCase(
             idsSensores,
             cancellationToken);
 
+        var historicos = await leituraTemperaturaRepository.ObterHistoricoRecentePorSensoresAsync(
+            idsSensores,
+            dataRecebimento,
+            ParametrosPrevisaoTendencia.JanelaMaxima - 1,
+            cancellationToken);
+
         var leiturasParaSalvar = new List<LeituraTemperatura>(payload.Sensores.Count);
         var contextosAvaliacao = new List<ContextoAvaliacao>(payload.Sensores.Count);
         foreach (var leitura in payload.Sensores)
@@ -108,7 +115,8 @@ public class ProcessarLeiturasLoteUseCase(
                 leituraAnterior?.ValorCelsius,
                 leituraAnterior is null
                     ? null
-                    : dataRecebimento - leituraAnterior.DataHora));
+                    : dataRecebimento - leituraAnterior.DataHora,
+                historicos.GetValueOrDefault(sensor.Id)));
         }
 
         var resultadosPorSensor = await qualityGateEvaluator.AvaliarLoteAsync(
