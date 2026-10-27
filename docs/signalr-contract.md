@@ -34,6 +34,91 @@ Cada item contém:
 evento normal. Os campos `valorObservado`, `valorLimite` e `metadados` podem
 ser `null`.
 
+## Exemplo de telemetria
+
+Cada lote publicado em `ReceberLoteTelemetria` é um array com uma entrada por
+escova do motor. O exemplo abaixo mostra duas escovas, uma delas com alerta:
+
+```json
+[
+  {
+    "sensorId": "AA:BB:CC:DD:EE:FF-1",
+    "espMacAddress": "AA:BB:CC:DD:EE:FF",
+    "numeroEscova": 1,
+    "valorCelsius": 72.4,
+    "dataHora": "2026-10-26T14:30:00+00:00",
+    "alertaDesgaste": false,
+    "motorId": 3,
+    "resultadosQualityGates": [
+      {
+        "regraQualidadeId": "5f0c2b1e-8d4a-4a53-9a58-1f6f0a7c9e11",
+        "nomeRegra": "Limiar estático",
+        "disparouAlerta": false,
+        "severidade": "Normal",
+        "tipoRegra": "temperatura.limiar_estatico",
+        "codigoRegra": "OK",,
+        "valorObservado": null,
+        "valorLimite": null,
+        "metadados": null
+      }
+    ]
+  },
+  {
+    "sensorId": "AA:BB:CC:DD:EE:FF-2",
+    "espMacAddress": "AA:BB:CC:DD:EE:FF",
+    "numeroEscova": 2,
+    "valorCelsius": 96.1,
+    "dataHora": "2026-10-26T14:30:00+00:00",
+    "alertaDesgaste": true,
+    "motorId": 3,
+    "resultadosQualityGates": [
+      {
+        "regraQualidadeId": "5f0c2b1e-8d4a-4a53-9a58-1f6f0a7c9e11",
+        "nomeRegra": "Limiar estático",
+        "disparouAlerta": true,
+        "severidade": "Critico",
+        "tipoRegra": "temperatura.limiar_estatico",
+        "codigoRegra": "TEMP_CRITICA",
+        "mensagemDiagnostico": "Escova 2 atingiu temperatura crítica de 96.1 °C.",
+        "valorObservado": 96.1,
+        "valorLimite": 95,
+        "metadados": null
+      }
+    ]
+  }
+]
+```
+
+Os valores de `codigoRegra`, `mensagemDiagnostico` e `metadados` dependem da
+regra; o exemplo é ilustrativo.
+
+Logo em seguida, o backend publica `ReceberStatusMotor` para o motor:
+
+```json
+{
+  "motorId": 3,
+  "severidadeGeral": "Critico",
+  "situacao": "Online",
+  "contagem": { "normal": 1, "atencao": 0, "alertaPreditivo": 0, "critico": 1 },
+  "motivo": {
+    "numeroEscova": 2,
+    "nomeRegra": "Limiar estático",
+    "tipoRegra": "temperatura.limiar_estatico",
+    "codigoRegra": "TEMP_CRITICA",
+    "valorObservado": 96.1,
+    "valorLimite": 95,
+    "mensagemDiagnostico": "Escova 2 atingiu temperatura crítica de 96.1 °C."
+  },
+  "escovas": [
+    { "sensorId": "AA:BB:CC:DD:EE:FF-1", "numeroEscova": 1, "valorCelsius": 72.4, "severidade": "Normal", "dataHora": "2026-10-26T14:30:00+00:00", "alertaDesgaste": false, "resultadosQualityGates": [] },
+    { "sensorId": "AA:BB:CC:DD:EE:FF-2", "numeroEscova": 2, "valorCelsius": 96.1, "severidade": "Critico", "dataHora": "2026-10-26T14:30:00+00:00", "alertaDesgaste": true, "resultadosQualityGates": [] }
+  ]
+}
+```
+
+Em `escovas[].resultadosQualityGates` vão os mesmos objetos mostrados acima; foram
+omitidos aqui para abreviar.
+
 ## Resultado de Quality Gate
 
 Cada resultado contém `regraQualidadeId`, `nomeRegra`, `disparouAlerta`,
@@ -97,10 +182,9 @@ Ao chamar `AssinarMotor(motorId)`, o cliente entra no grupo do motor e recebe
 imediatamente `ReceberStatusMotor` com o snapshot atual. Após uma nova
 telemetria, o backend publica o snapshot atualizado em broadcast global.
 
-Cada lote de telemetria contém todas as escovas do motor. Portanto, o status
-publicado após o processamento do lote pode ser calculado com os dados recém
-recebidos, sem tratar o lote como parcial. O campo `motorId` permite que cada
-cliente filtre os snapshots do motor exibido.
+O worker só aceita lotes com o conjunto completo de sensores do motor; portanto
+o status publicado após cada lote representa o motor inteiro. O campo `motorId`
+permite que cada cliente filtre os snapshots do motor exibido.
 
 O payload contém:
 
@@ -116,3 +200,7 @@ O payload contém:
 Os enums `severidadeGeral`, `escovas[].severidade` e `situacao` são sempre
 serializados como strings. O campo `desde` não faz parte deste primeiro
 contrato; será adicionado quando o histórico de transições for implementado.
+
+O backend não emite evento quando um ESP fica em silêncio, portanto `Offline` não
+é enviado por push. Se o cliente deixar de receber eventos do motor por um tempo
+(por exemplo, 30 s), deve consultar `GET /api/motores/{motorId}/status`.
